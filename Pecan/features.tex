@@ -1,0 +1,204 @@
+\section{Features}\label{sec:features}
+
+\subsection{Functions}
+
+Some predicates represent relations which are functions.
+For readability, Pecan allows the use of \term{placeholders}, which allow specifying the output of a function-like predicate.
+For example, if we have a predicate \pecaninline{bin\_add(x, y, z)} accepting triples such that $x + y = z$ for binary numbers $x$, $y$, and $z$, then \pecaninline{bin\_add(x, y, \_)} is equivalent to writing $x + y$.
+So we could have written \pecaninline{bin\_add(x, y, \_) = z} instead of \pecaninline{bin\_add(x, y, z)}.
+Such a formula will be translated into:
+\begin{pecan}
+$\color{red} \exists$v. bin_add(x, y, v) & v = z
+\end{pecan}
+
+Because the last argument to a function-like relation is typically the output argument, we can simply write \pecaninline{f(x)} to mean \pecaninline{f(x, \_)}.
+
+\subsection{Annotations}
+
+Pecan supports \term{annotations}, which may \term{wrapped} around any formula.
+They do \textbf{not} change the logical value of the automaton, but are instead used to tell Pecan how to evaluate a formula (e.g., when to simplify).
+
+The follow annotations are available:
+
+\begin{pecan}
+@postprocess[FORMULA]
+\end{pecan}
+
+Performs a series of simplifications on the automaton representing \pecaninline{FORMULA}.
+
+\begin{pecan}
+@simplify[FORMULA]
+\end{pecan}
+
+Turns on simplification (the default) for the formula and all its subformulas.
+
+\begin{pecan}
+@no_simplify[FORMULA]
+\end{pecan}
+
+Turns off simplification for the formula and all its subformulas.
+
+\begin{pecan}
+@simplify_states[FORMULA]
+\end{pecan}
+
+Performs basic simplifications on states, such as merging equivalent states and purging unreachable and dead states.
+
+\begin{pecan}
+@simplify_edges[FORMULA]
+\end{pecan}
+
+Performs basic simplifications on states with the goal of reducing the number of edges.
+See the Spot documentation for \pecaninline{merge_edges} for more information.
+
+\subsection{Automatic Words}
+
+Currently only binary automatic words are supported, which are just syntactic sugar for predicates.
+Any predicate $P$ can be interpreted as a word by writing $P[i]$, which is treated as $1$ if $P(i)$ is true, and $0$ if $P(i)$ is false.
+Then we have the following translations into the IR:
+
+\begin{itemize}
+    \item $P[i] = 1$ becomes $P(i)$
+    \item $P[i] = 0$ becomes $\lnot P(i)$
+    \item $P[i] = Q[j]$ becomes $P(i) \iff P(j)$
+    \item $P[i] \neq Q[j]$ becomes $\lnot (P(i) \iff P(j))$
+\end{itemize}
+
+\subsection{Directives}
+
+\begin{pecan}
+#save_aut(FILENAME, PREDICATE)
+#save_aut("bin_even.aut", bin_even)
+\end{pecan}
+
+Saves the predicate as an automaton in the HOA~\cite{hoa-format} format to the location specified.
+
+\begin{pecan}
+#save_aut_img(FILENAME, PREDICATE_NAME)
+#save_aut_img("bin_even.svg", bin_even)
+\end{pecan}
+
+Saves the predicate as an SVG file at the location specified.
+
+\begin{pecan}
+#context(KEY, VALUE)
+#context("adder", "bin_add")
+\end{pecan}
+
+Sets the key to the value in the current context.
+The context is a global key-value store that is used to manage some parts of Pecan such as defaults (e.g., the default adder, equals, etc.).
+
+\begin{pecan}
+#end_context(KEY)
+#end_context("adder")
+\end{pecan}
+
+Deletes the specified key from the context.
+
+\begin{pecan}
+#load(FILENAME, FORMAT, PREDICATE)
+#load("bin_add.aut", "hoa", bin_add(a,b,c))
+#load("real/real_equal.txt", "pecan", real_equal(a, b))
+\end{pecan}
+
+Loads an automaton from a file with the specified name and arguments.
+Note that the number of arguments is \emph{NOT} checked for you.
+In general, you should be careful when loading automata from files because there are not many safeguards (it is assumed you know what you are doing).
+There are three currently supported formats: ``hoa''~\cite{hoa-format}, as described earlier; ``walnut'', the format that the automated theorem prover Walnut~\cite{walnut} uses; and ``pecan'', a custom format that Pecan uses, described below in~\ref{sec:aut-format}.
+
+\begin{pecan}
+#assert_prop(PROP_VAL, PREDICATE_NAME)
+#assert_prop(true, int_add_comm)
+\end{pecan}
+
+The main interface to the theorem proving capabilities of Pecan.
+The possible values for \pecaninline{PROP_VAL} are \pecaninline{true}, \pecaninline{false}, and \pecaninline{sometimes}.
+While theorems are typically represented by predicates that take no arguments, this directive still works if the predicate does take arguments.
+In that case, asserting a predicate is \pecaninline{true} is the same as asserting that it is true for all possible inputs; asserting that it is \pecaninline{sometimes} true checks if there is any input that it accepts.
+
+\begin{pecan}
+#import(FILENAME)
+#import("integers.pn")
+\end{pecan}
+
+Loads all definitions from the specified file into the current scope.
+Does \emph{NOT} load restrictions into the current scope, but they function normally while evaluating the imported file.
+To control the search path, you can set the \lstinline{PECAN_PATH} environment variable.
+By default, the current working directory (at the time of loading the program), the directory the current source file is in, and the \lstinline{library/} directory of the Pecan directory.
+
+\begin{pecan}
+#forget(VARIABLE)
+#forget(x)
+\end{pecan}
+
+Removes all restrictions on the specified variable.
+
+\begin{pecan}
+Structure TYPE_PREDICATE defining {
+    FUNCTION_PREDICATES
+}
+
+Structure nat defining {
+    "adder": bin_add(any, any, any),
+    "less": bin_less(any, any)
+}
+\end{pecan}
+
+Defines a new type.
+\pecaninline{TYPE_PREDICATE} should be the part you write after the \pecaninline{is} in a restriction. For example, in \pecaninline{Restrict x is nat.}, the relevant part is \pecaninline{nat}; in \pecaninline{Restrict i is ostrowski(a).}, the relevant part is \pecaninline{ostrowski(a)}.
+The function predicates become available to be called using the names in quotes---this feature allows for ad-hoc polymorphism.
+It is also used to resolve arithmetic operators, such as \pecaninline{+} (which calls the relevant \pecaninline{adder}) and \pecaninline{<} (which calls the relevant \pecaninline{less}).
+For example, in the following code, \pecaninline{f} and \pecaninline{g} are equivalent.
+\begin{pecan}
+Restrict a, b are nat.
+
+f(a, b) := a < b
+g(a, b) := bin_less(a, b)
+\end{pecan}
+
+The full list of special names is as follows:
+
+\begin{itemize}
+    \item[\texttt{adder}] Used to resolve \pecaninline{+}
+    
+    \item[\texttt{less}] Used to resolve \pecaninline{<}
+    
+    \item[\texttt{zero}] Used to resolve \pecaninline{0}
+    
+    \item[\texttt{one}] Used to resolve \pecaninline{1}, and all integer constants other than \pecaninline{0} (e.g., \pecaninline{2} is calculated as \pecaninline{1 + 1})
+    
+    \item[\texttt{equal}] Used to resolve \pecaninline{=}
+    
+\end{itemize}
+
+\begin{pecan}
+#shuffle(PREDICATE, PREDICATE, PREDICATE)
+#shuffle(int_less(a, b), any2(a, b), integral_less(a, b))
+\end{pecan}
+
+Shuffles the two predicates into one, by alternating between the two; shuffling is defined as below.
+
+\begin{definition}
+    The \textbf{shuffle} of two automata $\mathcal{A}$ and $\mathcal{B}$ is an automaton $\mathcal{C}$ such that if $a = a_1 a_2 \cdots$ and $b = b_1 b_2 \cdots$ are $\omega$-words accepted by $\mathcal{A}$ and $\mathcal{B}$ respectively, then $c = a_1 b_1 a_2 b_2 \cdots$ is accepted by $\mathcal{C}$.
+\end{definition}
+
+In the example above, \pecaninline{int_less(a, b)} accepts $a$ and $b$ such that $a < b$ where $a, b \in \Z$ and \pecaninline{any2(a, b)} accepts every pair of strings $a$ and $b$.
+If we think of the shuffled string as a pair (e.g., if our string is $c = a_1 b_1 a_2 b_2 \cdots$, we could think of it as $c = (a_1 a_2 \cdots, b_1 b_2 \cdots)$) whose first component is the integral part of a real number and the second component is the fractional part, then their shuffle is an automaton that accepts real numbers $a$ and $b$ such that the integral part of $a$ is less than that of $b$, and ignores the fractional part.
+
+\begin{pecan}
+#shuffle_or(FILENAME, FORMAT, PREDICATE)
+#shuffle_or(one_int(x), zeros(x), real_one(x))
+\end{pecan}
+
+This shuffle operation is the same as above, except that it only requires that one of the strings in the shuffle is accepted by one of the automata.
+More specifically:
+
+\begin{definition}
+    The \textbf{(disjunctive) shuffle} of two automata $\mathcal{A}$ and $\mathcal{B}$ is an automaton $\mathcal{C}$ such that if $a = a_1 a_2 \cdots$ and $b = b_1 b_2 \cdots$ are $\omega$-words such that \emph{either} $\mathcal{A}$ accepts $a$ \emph{or} $\mathcal{B}$ accepts $b$ (or both are accepted), then $c = a_1 b_1 a_2 b_2 \cdots$ is accepted by $\mathcal{C}$.
+\end{definition}
+
+\begin{pecan}
+Restrict VARIABLES (is|are|$\color{red} \in$) TYPE.
+\end{pecan}
+
+In all following code in this file, the variables specified are now consider to be of the specified type, unless deleted by a \pecaninline{#forget}.

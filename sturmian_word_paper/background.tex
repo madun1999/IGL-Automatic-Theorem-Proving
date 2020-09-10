@@ -1,0 +1,126 @@
+\section{Background}\label{sec:background}
+
+The \term{continued fraction} of a positive real number $x$ is a sequence of natural numbers $a_0,a_1,a_2\ldots$ such that \[
+x=a_0+\cfrac{1}{a_1+\cfrac{1}{a_2+\cfrac{1}{a_3+\ddots}}}
+\]
+We write this as $x = [a_0,a_1,a_2,a_3,\ldots]$.
+
+If the sequence is infinite and ultimately periodic with repeating part $a_i\dots a_j$, then we write this as $x = [a_0,a_1,a_2,\dots \overline{a_i,\dots,a_j}]$.
+
+We make use of the \term{convergents} of the continued fraction to define an Ostrowski-$\alpha$ numeration system, where $\alpha$ is some positive irrational number.
+
+\begin{equation*}
+    \frac{p_n}{q_n} = [a_0, a_1, a_2, \ldots, a_n]
+\end{equation*}
+
+The sequences $p$ and $q$ are given by the following recursive definition:
+
+\begin{equation}\label{eqn:conv-def}
+\begin{split}
+    p_{-2} = 0, \quad p_{-1} = 1, \quad p_n = a_n p_{n-1} + p_{n-2} \quad \text{for} \quad n > 0\\
+    q_{-2} = 1, \quad q_{-1} = 0, \quad q_n = a_n q_{n-1} + q_{n-2} \quad \text{for} \quad n > 0
+\end{split}
+\end{equation}
+
+The convergents approximate $\alpha$, specifically:
+
+\begin{equation*}
+    \left| \alpha - \frac{p_n}{q_n} \right| < \frac{1}{q_n q_{n+1}} < \frac{1}{q_n^2} \quad \text{for all} \quad n.
+\end{equation*}
+
+Then every natural number $n$ may be written as a sequence $b_j b_{j-1} \cdots b_0$ where each $b_i \in \mathbb{N}$, such that $b_0 < a_0$, $b_i \leq a_i$, and if $b_i = a_i$, then $b_{i-1} = 0$, and the following equation holds:
+
+\begin{equation*}\label{eqn:ostrowski-def}
+    n = \sum_{i=0}^j b_j q_j
+\end{equation*}
+
+We call this sequence $b_j b_{j-1} \cdots b_0$ the \term{Ostrowski-$\alpha$ representation of n}.
+A \word $b_j b_{j-1} \cdots b_0$ is a \term{valid} Ostrowski-$\alpha$ representation if $b_0 < a_0$, and for all $i > 0$, either $b_i < a_i$ or $b_i = a_i$ and $a_{i-1} = 0$.
+Each natural number has a unique valid Ostrowski-$\alpha$ representation~\cite{Ostrowski1922}.
+
+For example, when $\alpha = \sqrt{2}$, the sequence $(q_n)$ starts out $1,2,5,12,\ldots$.
+We can write $14_{10}$ in the Ostrowski-$\sqrt{2}$ numeration system as: $0\cdot1 + 1\cdot2 + 0\cdot5 + 1\cdot12$, or $1010_{\sqrt{2}}$.
+Note there are two ways to write each number: least significant digit (LSD) and most significant digit MSD.
+Above, $1010_{\sqrt{2}} = 14_{10}$ is written in the standard MSD form, however, many of our automata use LSD because it is often more natural to create them this way---we may convert our automata via reversing them, which Walnut can do automatically, so this poses no issues.
+
+\reed{This is mostly from: http://mathworld.wolfram.com/LucasSequence.html}
+Let $P$ and $Q$ be integers such that $D = P^2 - 4Q > 0$.
+Then the roots of $x^2 - Px + Q = 0$ are:
+
+\begin{equation*}
+    a = \frac{1}{2} \left( P + \sqrt{D} \right); \quad \quad 
+    b = \frac{1}{2} \left( P - \sqrt{D} \right)
+\end{equation*}
+
+Define the sequences $(U_n)_{n \in \mathbb{N}}$ and $(V_n)_{n \in \mathbb{N}}$ as follows:
+
+\begin{equation*}
+    U_n(P, Q) = \frac{a^n - b^n}{a - b}; \quad \quad V_n(P, Q) = a^n + b^n
+\end{equation*}
+
+These sequences are called \term{Lucas sequences}.
+Note that when $P = 1$ and $Q = -1$, then $U_n$ is the sequence of Fibonacci numbers and $V_n$ is the sequence of Lucas numbers, and when $P = 2$ and $Q = -1$, then $U_n$ is the sequence of Pell numbers, and $V_n$ is the sequence of Pell-Lucas numbers.
+In the Ostrowski-$\varphi$ numeration system, where $\varphi = \frac{1 + \sqrt{5}}{2}$, the denominators of the convergents, $q_n$ are the Fibonacci numbers.
+Similarly, in the Ostrowski-$\sqrt{2}$ numeration system, the $q_n$ are the Pell numbers.
+
+A \term{\word} $w$ is a sequence of \letter{}s, each of which is an element of an alphabet $\Sigma$.
+Let $\Sigma^*$ denote the set of finite words containing only symbols from the alphabet $\Sigma$, and let $\Sigma^+$ denote the set of nonempty finite words containing only symbols from the alphabet $\Sigma$.
+
+For a \word $w$, let $w[i]$ denote the $i$-\letter of $w$.
+Let $w(i,n)$ denote the length-$n$ \factor of $w$ starting at $i$ and ending at $i + n - 1$, that is, $w[i \ldots i + n - 1] = w[i] w[i + 1] \cdots w[i + n - 1]$.
+Let $w^R$ denote the \term{reverse} of $w$, so if $w = w[1] w[2] \cdots w[n]$, then $w^R = w[n] w[n-1] \cdots w[1]$.
+In a binary alphabet, $\Sigma = \{0,1\}$, for a symbol $x \in \Sigma$, let $\overline{x}$ denote the \term{complement} of $x$, so $\overline{0} = 1$ and $\overline{1} = 0$.
+For a \word $w$ over a binary alphabet, let $\overline{w}$ denote the \term{complement} of $w$, $\overline{w} = \overline{w[1]} \, \overline{w[2]} \cdots \overline{w[n]}$.
+A positive integer $p$ is a \term{period} of a \word $w$ if $w[i] = w[i + p]$ for all $i$.
+A \word is \term{periodic} if it has any period, and \text{aperiodic} if there are no periods.
+
+Consider the standard coordinate plane, and some irrational $\alpha \in (0,1)$.
+Draw the line $y = \alpha x$.
+We can define the \term{Sturmian words} via a \term{cutting sequence} given by this line in the standard coordinate plane; that is, as a sequence of \letter{}s corresponding to the grid lines crossed by the line.
+We define the \word $\text{cut}_{\alpha}$ as follows:
+$\text{cut}_{\alpha}[n] = 0$ if the $n$-th line crossed by $y = \alpha x$ is a vertical line, and $\text{cut}_{\alpha}[n] = 1$ if it is a horizontal line.
+
+Then the \term{characteristic Sturmian word with slope $\alpha$}, $C_{\alpha}$ is given by $C_{\alpha} = \text{cut}_{\alpha/(1-\alpha)}$~\autocite[Theorem 9.2.1]{auto_seq}.
+Note that the first index of $C_{\alpha}$ is taken to be $1$, not $0$.
+Using this procedure, we can see that $C_{\varphi}$, shown in Figure~\ref{fig:geom-sturmian-phi} starts out $10110101\ldots$.
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+       \tkzInit[xmax=4,ymax=5,xmin=0,ymin=0]
+       \tkzGrid
+       \tkzAxeXY
+       \draw[thick,latex-latex] (0,0) -- (3,3*1.61803) node[anchor=south west] {};
+       
+       \foreach \x in {1,2,3}{
+            \node[fill=black, circle, inner sep=1.5pt, label=right:$0$] at (\x,\x*1.61803) {};
+       }
+       
+       \foreach \y in {1,2,3,4,5}{
+            \node[fill=black, circle, inner sep=1.5pt, label=above:$1$] at (\y/1.61803,\y) {};
+       }
+    \end{tikzpicture}
+    \caption{The Sturmian word $C_{\varphi}$, defined by the cutting sequence $\text{cut}_{\varphi}$ with $\varphi = \frac{1 + \sqrt{5}}{2}$}
+    \label{fig:geom-sturmian-phi}
+\end{figure}
+
+Let $w$ be some finite \word, and $a$ a \letter in the alphabet.
+Let $|w|$ denote the length of $w$ and let $|w|_a$ denote the number of occurrences of $a$ in $w$.
+A \word $z$ (finite or infinite) is \term{balanced} if, for every \letter $a$ and pair of \factor{}s $u$ and $v$ of $z$ where $|u| = |v|$, $||u|_a - |v|_a| \leq 1$.
+
+\begin{theorem}\label{thm:comb-sturmian-def}
+An infinite binary word is Sturmian if and only if it is aperiodic and balanced.
+\reed{find citation}
+\end{theorem}
+
+% Same reference as above (edit: which I deleted...the reference is in the first critical exponent paper)
+There is an intimate connection between the Ostrowski-$\alpha$ numeration system and the characteristic Sturmian word with slope $\alpha$, given by the following theorem.
+
+\begin{theorem}\label{thm:ostrowski-sturmian}
+Let $n \geq 1$ be an integer with Ostrowski-$\alpha$ representation: $b_j b_{j-1} \cdots b_0$.
+Then $C_{\alpha}[n] = 1$ if and only if $b_j b_{j-1} \cdots b_0$ ends in an odd number of $0$'s.
+\reed{cite}
+\end{theorem}
+
+A \word $w$ is an \term{automatic \word} if there is an automaton with output which outputs the $n$-th digit of $w$ when given $n$ in some numeration system.
+Because we can create automata which allow us to implement the Ostrowski-$\alpha$ numeration system, then using the above theorem, we can see that Sturmian words are automatic: we only need an automaton which keeps track of whether the Ostrowski representation ends in an even or odd number of $0$'s.

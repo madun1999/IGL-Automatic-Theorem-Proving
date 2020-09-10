@@ -1,0 +1,231 @@
+\documentclass[10pt,usenames,dvipsnames]{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{mathtools}
+\usepackage{enumerate}
+\usepackage[margin=1.25in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{kpfonts}
+\usepackage{subfigure}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\input{FA19/macros.tex}
+\input{FA19/pecan_lang.tex}
+
+\usepackage[
+backend=biber,
+style=numeric,
+sorting=ynt
+]{biblatex}
+
+\addbibresource{biblio.bib}
+
+\title{Automatic Theorem Proving}
+
+\author{%
+Authors: Reed Oei, Eric Ma, Tatum Schmidt, Abdullah Dean \\
+Graduate Mentor: Christian Schulz \\
+Faculty Advisor: Philipp Hieronymi%
+}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+An \textbf{automated theorem prover} is a program that takes as input a statement and \emph{decides} (i.e., proves or disproves) it. 
+Theorem provers can be very useful: computers are reliable, and they never get tired or bored, allowing us to quickly explore new ideas.
+Though it is impossible to decide \emph{all} statements, we can still use theorem provers to solve many interesting problems. 
+
+\section{Background}
+
+A \textbf{finite automaton} is a ``machine'' that accepts some \textbf{finite word}, or string of letters, such as ``abc.''
+They can be represented as a \emph{finite} collection of \textbf{states} and \textbf{transitions}.
+
+Automata have nice closure properties: we can combine them using first-order logic operations.
+Therefore, there is an algorithm that can decide any statement expressed solely in terms of first order logic operations and properties defined by finite automata.
+
+\begin{theorem}{\cite{aut_theory}}
+    Suppose we have predicates $P$ and $Q$, such that automaton $\mathcal{A}$ accepts words that makes $P$ true, and $\mathcal{B}$ accepts words that makes $Q$ true, then we can construct, from $\mathcal{A}$ and $\mathcal{B}$, the automata that accepts words that makes $P \land Q$, $P \lor Q$, $\lnot P$ true.
+\end{theorem}
+
+For the quantifiers, $\forall$ and $\exists$, we need to define automata that accepts multiple inputs. 
+\begin{definition}
+    An automaton $\mathcal{A}$ accepts a pair of words $ (x_1x_2\dots x_n, y_1y_2\dots y_n)$ if it accepts the word $(x_1,y_1)(x_2,y_2)\dots(x_n,y_n)$.
+\end{definition}
+
+\begin{theorem}\cite{aut_theory}
+    Suppose $p(x,y)$ is a predicate with two inputs, and automaton $\mathcal{A}$ accepts pairs of words that makes $p$ true, then we can construct an automaton, from $\mathcal{A}$, which accepts words that makes $p'(y) = \exists x. p(x,y)$ true.
+\end{theorem}
+
+Therefore, we can combine predicates using first-order quantifiers and construct the automaton associated with the predicate.
+
+\textbf{B\"uchi Automata} are an extension of finite automata to infinite inputs; they accept words that visit an accepting state infinitely often \cite{aut_theory}. 
+Using B\"uchi automata has a number of advantages:
+\begin{itemize}
+        \item Some problems are more naturally expressed with B\"uchi automata
+        \item Some problems can \emph{only} be expressed with B\"uchi automata
+        \item We can still express properties about finite strings
+\end{itemize}
+A major application of B\"uchi automata is in model checking: verifying that programs have the expected behavior.
+
+\section{Pecan}
+
+\textbf{Pecan} is a system for automated theorem proving that represents logical predicates using B\"uchi automata.
+Pecan programs are made up of \textbf{predicates} and \textbf{directives}:
+
+\begin{itemize}
+    \item predicates: defined either by loading automata defined in files, translating LTL (linear temporal logic) formulas into B\"uchi automata, or some combination of these using first order logic and equality.
+
+\begin{lstlisting}[language=pecan, basicstyle=\normalsize\ttfamily, mathescape=true, frame=single]
+eq_sym() := $\forall$x. $\forall$y. x =$\ $y $\color{red} \iff$ y =$\ $x
+\end{lstlisting}
+
+    \item directives: commands to the Pecan interpreter, such as: \texttt{assert\_prop}, which asks Pecan to prove a theorem
+    
+\begin{lstlisting}[language=pecan, basicstyle=\normalsize\ttfamily, mathescape=true, frame=single]
+#assert_prop(true, eq_sym)
+\end{lstlisting}
+
+\end{itemize}
+
+The Pecan language is a statically-typed, interpreted programming language.
+The basic datatype, or universal set, in Pecan is the infinite binary word---elements of $\Sigma^{\omega}$ where $\Sigma = \{0,1\}$.
+All types are \textbf{refinement types}: they are defined as a subset of $\Sigma^{\omega}$ satisfying some predicate defined in terms of B\"uchi automata.
+
+\begin{example}
+A word $x \in \Sigma^\omega$ has type \texttt{binary} if $x \in \{ w \in \Sigma^* : x = w0^\omega \}$---that is, binary words that are eventually $0$.
+Equivalently, we can define $\texttt{binary}$ as the words satisfying the LTL formula $F(G(\neg x))$.
+\end{example}
+
+Users can define their own \textbf{structures} on a type so that names can be overloaded: for example, this allows users to define their own numeration systems.
+
+\begin{lstlisting}[language=pecan, basicstyle=\normalsize\ttfamily, mathescape=true, frame=single]
+#type(binary, {
+    "adder": bin_add(any, any, any),
+    "less": bin_less(any, any) 
+})
+\end{lstlisting}
+
+Pecan is capable of proving any statement expressed solely in terms of B\"uchi automata and first order logic connectives, such as $\wedge$, $\vee$, $\neg$, $\forall$, and $\exists$.
+In particular, it is powerful enough to decide any statement in Presburger arithmetic (and its natural extension to $\mathbb{Z}$ or $\mathbb{R}$), the first order theory of the natural numbers with addition (but \emph{not} multiplication) and comparison ($<$).
+
+\section{Results}
+
+Our main result is the creation of Pecan; this section serves as a demonstration of some of the theorems that Pecan is capable of proving.
+
+\subsection{Example: The Chicken McNugget Problem }
+
+In the 1980s, Henri Picciotto asked the following problem in his algebra textbook:
+
+\begin{quote}
+    What is the greatest number of chicken nuggets that cannot be ordered using only boxes of 6, 9, and 20?
+\end{quote}
+
+We call all such numbers \textbf{non-purchasable}, and we can define them in Pecan as follows:
+
+\begin{lstlisting}[language=pecan, basicstyle=\normalsize\ttfamily, mathescape=true, frame=single]
+n,m,a,b,c $\color{red} \in$ binary
+purchasable(n) := n $\color{red} \in$ binary $\color{red} \wedge$ $\exists$a. $\exists$b. $\exists$c. n =$\ $6*a $\color{red} +$ 9*b $\color{red} +$ 20*c
+non_purchasable(n) := n $\color{red} \in$ binary $\color{red} \wedge$ $\color{red} \neg$purchasable(n)
+\end{lstlisting}
+
+We can then define the largest non-purchasable number naturally as:
+\begin{lstlisting}[language=pecan, basicstyle=\normalsize\ttfamily, mathescape=true, frame=single]
+largest(n) := non_purchasable(n) $\color{red} \wedge$ $\forall$m $\color{red} \in$ non_purchasable. n $\color{red} \geq$ m
+\end{lstlisting}
+
+Pecan produces the automaton in Figure~\ref{fig:largest_non_purchasable} for us, which tells us that the largest non-purchasable number is $101011_2$, or $43$ in base 10.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{images/largest_not_purchasable.pdf}
+    \caption{A B\"uchi automaton accepting $110101$ in least significant digit first representation.}
+    \label{fig:largest_non_purchasable}
+\end{figure}
+
+\subsection*{Example: Properties of the Thue-Morse Word}
+
+Below, we develop a Pecan program that proves two well-known properties of the Thue-Morse word, $T$, which is defined by: the $n$-th digit of the Thue-Morse word, $T[n]$, is $1$ if the binary representation of $n$ has an odd number of $1$'s, and $0$ otherwise \cite{auto_seq}.
+
+The Thue-Morse word starts with: $1101001100101101001011001101001\ldots$
+\begin{definition}
+    A word $w$ is a \textbf{square} if it is of the form $w = xx$ for some nonempty word $x$.
+    Similarly, $w$ is a \textbf{cube} if it is of the form $w = xxx$ for some nonempty word $x$.
+\end{definition}
+
+\begin{theorem}\cite{auto_seq}
+    The Thue-Morse word contains squares, but does not contain any cubes.
+\end{theorem}
+
+Here is the equivalent definition of $T$ in Pecan (\texttt{odd\_ones} is defined as an automaton):
+\begin{lstlisting}[language=pecan, basicstyle=\normalsize\ttfamily, mathescape=true, frame=single]
+T(x) := odd_ones(x)
+\end{lstlisting}
+
+Below are definitions of square and cube for the Thue-Morse word in Pecan.
+
+\begin{lstlisting}[language=pecan, basicstyle=\normalsize\ttfamily, mathescape=true, frame=single]
+i,j,n $\color{red} \in$ binary
+square(i, n) := n > 0 $\color{red} \wedge$ T[i $\color{red} \ldots$ i+n] =$\ $T[i+n $\color{red} \ldots$ i+2*n]
+cube(i, n) := square(i, n) $\color{red} \wedge$ square(i+n, n)
+\end{lstlisting}
+
+
+Finally, we state the theorems we would like to prove, and ask Pecan to attempt to prove that there are squares, but there are no cubes.
+
+\begin{lstlisting}[language=pecan, basicstyle=\normalsize\ttfamily, mathescape=true, frame=single]
+squares_exist() := $\exists$i. $\exists$n. square(i, n)
+#assert_prop(true, squares_exist)
+cubes_exist() := $\exists$i. $\exists$n. cube(i, n)
+#assert_prop(false, cubes_exist)
+\end{lstlisting}
+
+The output from Pecan is the following, indicating that the theorem is true.
+\begin{lstlisting}[basicstyle=\normalsize\ttfamily, mathescape=true, frame=single]
+[INFO] Checking if squares_exist is true.
+$\text{\color{ForestGreen}squares\_exist is true.}$
+[INFO] Checking if cubes_exist is false.
+$\text{\color{ForestGreen}cubes\_exist is false.}$
+\end{lstlisting}
+
+Here is another theorem about the Thue-Morse word that we can check.
+\begin{theorem}\cite{auto_seq}
+There are no overlapping squares, i.e. words of form $0x0x0$ or $1x1x1$ for some nonempty word $x$. 
+\end{theorem}
+
+We can express this theorem in Pecan as:
+
+\begin{lstlisting}[language=pecan, basicstyle=\normalsize\ttfamily, mathescape=true, frame=single]
+i,j,n $\color{red} \in$ binary
+o_square(i, n) := n > 0 $\color{red} \wedge$ 
+                  T[i+1 $\color{red} \ldots$ i+n+1] = $\ $T[2+i+n $\color{red} \ldots$ 2+i+2*n] $\color{red} \wedge$  
+                  T[i] =$\ $T[i+n] $\color{red} \wedge$ T[i] =$\ $T[2+i+2*n]
+o_squares_exist() := $\exists$i. $\exists$n. o_square(i, n)
+#assert_prop(false, o_squares_exist)
+\end{lstlisting}
+
+Pecan verifies the theorem: 
+
+\begin{lstlisting}[basicstyle=\normalsize\ttfamily, mathescape=true, frame=single]
+[INFO] Checking if o_squares_exist is false.
+$\text{\color{ForestGreen} o\_squares\_exist is false.}$
+\end{lstlisting}
+
+\section{Future Work}
+
+We plan to continue to develop Pecan and to write a manual for it. 
+We proved various theorems about special classes of infinite binary sequences known as \textbf{Sturmian words}.
+Using Pecan, we hope to automatically prove theorems about \emph{all} Sturmian words at once.
+Finally, because Pecan uses B\"uchi automata, which accept infinite words, we can represent and prove theorems about real numbers.
+This was not possible with other automated theorem provers, such as Walnut \cite{walnut}---Pecan opens many new possibilities to explore.
+
+\printbibliography
+
+\end{document}

@@ -1,0 +1,21 @@
+// Currently these are quite slow, possibly could be improved
+// See Section 5.4 (atm) "Approximate antisquares" for definitions
+
+// 0-approximate antisquares are just antisquares
+def approx_0_antisq_2 "?lsd_base_2 At t < n & $recog_2(a,t) => (Eti $add_2(a,i,t,ti) & Etn $add_2(a,ti,n,tn) & C_2[ti] != C_2[tn])":
+
+def lt_p_2 "?lsd_base_2 Ez $add_2(a,x,y,z) & b < z": 
+def lte_p_2 "?lsd_base_2 Ez $add_2(a,x,y,z) & b <= z": 
+
+// 1-approximate antisquares
+def approx_1_antisq_2 "?lsd_base_2 Ak1 $recog_2(a,k1) & $lt_p_2(a,k1,i,n) =>
+                                    At t < n & $recog_2(a,t) => ($add_2(a,i,t,k1) | (Eti $add_2(a,i,t,ti) & Etn $add_2(a,ti,n,tn) & C_2[ti] != C_2[tn]))":
+// 2-approximate antisquares
+def approx_2_antisq_2 "?lsd_base_2 Ak1 $recog_2(a,k1) =>
+                                   Ak2 $recog_2(a,k2) & k1 <= k2 & $lt_p_2(a,k2,i,n) =>
+                                    At t < n & $recog_2(a,t) => ($add_2(a,i,t,k1) | $add_2(a,i,t,k2) | (Eti $add_2(a,i,t,ti) & Etn $add_2(a,ti,n,tn) & C_2[ti] != C_2[tn]))":
+// 3-approximate antisquares
+def approx_3_antisq_2 "?lsd_base_2 Ak1 $recog_2(a,k1) =>
+                                   Ak2 $recog_2(a,k2) & k1 <= k2 =>
+                                   Ak3 $recog_2(a,k3) & k2 <= k3 & $lt_p_2(a,k3,i,n) =>
+                                    At t < n & $recog_2(a,t) => ($add_2(a,i,t,k1) | $add_2(a,i,t,k2) | $add_2(a,i,t,k3) | (Eti $add_2(a,i,t,ti) & Etn $add_2(a,ti,n,tn) & C_2[ti] != C_2[tn]))":

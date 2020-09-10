@@ -1,0 +1,240 @@
+\section{$k$-bounded Sturmian Words}\label{sec:automata}
+
+\subsection{Definitions}
+
+Let $\alpha = [a_0, a_1, \ldots]$ be the continued fraction representation of some irrational number $\alpha$.
+Define $\alpha_{\leq k}$, the set of \textit{$k$-bounded continued fractions}, by:
+
+\begin{equation*}
+    \alpha_{<k} := \{ \alpha : \alpha = [ a_0, a_1, \ldots] \text{ where } \forall a_i, 0 < a_i \leq k\}
+\end{equation*}
+
+A \textit{$k$-bounded Ostrowski numeration system} is an Ostrowski numeration system for some $\alpha \in \alpha_{\leq k}$. 
+Let $\Sigma_k$ denote the alphabet of possible digits in a $k$-bounded Ostrowski numeration system, $\{0,\ldots,k\}$.
+Let $N_{\alpha}$ denote the set of words which are valid representations in the Ostrowski-$\alpha$ numeration system.
+For example, $\sqrt{2} \in \alpha_{\leq 2}$, because $\sqrt{2} = [1; \overline{2}]$.
+However, $\sqrt{5} = [2; \overline{4}] \not\in \alpha_{\leq 2}$.
+
+Note that $\left( \alpha_{<k} \right)_{k \in \mathbb{N}}$ is an increasing sequence---if a proposition holds for all $\alpha \in \alpha_{\leq k}$, then it also holds for all smaller $\alpha_{\leq j}$ for $j \leq k$.
+
+\subsection{Automata Generation}
+
+We are interested in creating the following automata which take any $k$-bounded continued fraction $\alpha$ as an input in continued fraction form.
+
+\begin{enumerate}[(i)]
+    \item $R_{\alpha}$, which recognizes strings $w$ such that $w$ is a valid Ostrowski-$\alpha$ representation of some natural number $n$.
+    \item $<_{\alpha}$, which recognizes pairs $(a,b)_{\alpha}$ such that $a < b$.
+    \item $=_{\alpha}$, which recognizes pairs $(a,b)_{\alpha}$ such that $a = b$.
+    \item $+_{\alpha}$, which recognizes triples $(a,b,c)_{\alpha}$ such that $a +_{\alpha} b = c$.
+\end{enumerate}
+
+In Ostrowski numeration systems, $<_{\alpha}$ is simple to define for any $\alpha$, as we may simply compare the two \word{}s place-by-place.
+Similarly, equality of two numbers in an Ostrowski-$\alpha$ numeration system is simply equality on the \letter{}s in the \word{}s.
+
+Recognition can be implemented by following the definition of Ostrowski-$\alpha$ representation given in Section~\ref{sec:background}, which lends itself to an easy definition in terms of an automaton.
+Note that when the expression $1$ is ambiguous, that is, when both $1_{\alpha} = 1$ and $10_{\alpha} = 1$, we choose $10_{\alpha} = 1$ as the unique representation of $1$, as it is the one that matches our definition of a valid Ostrowski-$\alpha$ representation.
+
+Following \citeauthor{ht-ostrowski}, we define four automata which combine to form the bounded addition automaton.
+
+The first of these automata, $\mathcal{A}_0$ takes the Ostrowski-$\alpha$ representations of two natural numbers, $a = x_j x_{j-1} \cdots x_0$ and $b = y_j y_{j-1} \cdots y_0$ and accepts the word $(x_j + y_j) (x_{j-1} + y_{j-1}) \cdots (x_0 + y_0)$.
+Note this automaton does not depend on $\alpha$, and therefore does not need to be modified.
+
+The next automaton, $\mathcal{A}_1$ takes this representation and ensures that every symbol is in the proper range, from $0$ to $a_k$, though there may be consecutive symbols which are not allowed in the final representation.
+For example, in the Zeckendorf numeration system, that is, the Ostrowski numeration system with $\alpha = \phi$, suppose we add $100_{\phi} + 10_{\phi}$.
+The first automaton gives us the new word $110_{\phi}$, and the second automaton leaves this word unchanged, as each value is in bounds---however, this is not a valid Zeckendorf representation as it has two consecutive ones.
+The next two automata, $\mathcal{A}_2$ and $\mathcal{A}_3$, correct this issue in two passes: $\mathcal{A}_2$ with one right-to-left pass, and $\mathcal{A}_3$ with one left-to-right pass.
+
+Below, we describe the modifications to the original automata to make each accept the continued fraction of $\alpha$, the irrational number defining the numeration system.
+By letting the coefficients of $\alpha$ be between $1$ and $k$, we obtain the addition and recognition automata for $k$-bounded Ostrowski numeration system.
+The automaton for the characteristic Sturmian word is essentially the same for any $\alpha$: that is, it only cares about the number of zeroes at the end of the Ostrowski-$\alpha$ representation of $n$ to find the $n$-th digit of $C_{\alpha}$.
+Using this, we may define a single automaton for every $\alpha \in \alpha_{<k}$, and we write $C_{\alpha}[n]$ to denote it's $n$-th digit.
+This allows us to index into any $k$-bounded Sturmian word, and therefore, to automatically decide theorems about such words.
+
+As noted above, $\mathcal{A}_0$ needs no modifications, so we begin with $\mathcal{A}_1 = (S_1, I_1, T_1, F_1)$.
+The set of states, $S_1$, is given by:
+\begin{equation*}\label{def:alg1-states}
+    S_1 := \Sigma_k^3 \times \Sigma_{2k+1}^3 \times \Sigma_k^3 \times \{0,1\}
+\end{equation*}
+
+The initial state, $I_1$ is $((0,0,0),(0,0,0),(0,0,0),0)$.
+
+The transition function is given below, and comes from the rules A1-A3 defined in Algorithm 1~\cite{ht-ostrowski}.
+The domain is the subset of the tuples $S_1 \times \{1,\ldots,k\} \times \Sigma_{2k+1} \times \Sigma_k$ that satisfy one of the following rules.
+Below, let $s = ((u_1,u_2,u_3),(v_1,v_2,v_3),(w_1,w_2,w_3),g)$ and $v_4 = v_4' + g$.
+
+\begin{itemize}
+    \item[(A1)] If $w_1 = v_1$, $v_2 < u_2$, $v_3 > u_3$, and $v_4 = 0$, then 
+    
+    $$T_1(s,u_4,v_4',w_4) := ((u_2,u_3,u_4),(v_2 + 1, v_3-(u_3+1),u_4-1),(w_2,w_3,w_4),1)$$
+    
+    \item[(A2)] If $w_1 = v_1$, $v_2 < u_2$, $u_3 \leq v_3 \leq 2u_3$, and $v_4 > 0$, then
+    
+    $$T_1(s,u_4,v_4',w_4) := ((u_2,u_3,u_4),(v_2+1,v_3-u_3,v_4-1),(w_2,w_3,w_4),0)$$
+    
+    \item[(A3)] If $v_1 = w_1$ and $v_2 = w_2$, then
+    
+    $$T_1(s,u_4,v_4',w_4) := ((u_2,u_3,u_4),(v_2,v_3,v_4),(w_2,w_3,w_4),0)$$
+\end{itemize}
+
+Similarly, we define the final states to be the states $s \in S_1$ such that $F_1(s) = (w_1,w_2,w_3)$ holds.
+$F_1$ is given by the rules B1-B5 defined in Algorithm 1 and is shown below:
+
+\begin{equation*}\label{def:alg1-final-func}
+\begin{split}
+    F_1&: S_1 \rightarrow \Sigma_k^3\\
+    F_1&(s) := 
+    \begin{cases}
+        F_1((u_2,u_3,u_4),(v_1 - 1, v_2 + u_2 + 1, 0),(w_1,w_2,w_3),0) & \text{if } g = 1\\
+        (v_1 + 1,v_2-u_2-1,u_3-1) & \text{if } v_1 < u_1,v_2 > u_2, v_3 = 0\\
+        (v_1 + 1, v_2 - u_2, v_3 - 1) & \text{if } v_1 < u_2, v2 \geq u_2, 0 < v_3 \leq u_3\\
+        (v_1 + 1, v_2 - u_2 + 1, v_3 - u_3 - 1) & \text{if } v_1 < u_2, v2 \geq u_2, v_3 > u_3\\
+        (v_1, v_2 + 1, v_3 - u_3) & \text{if } v_2 < u_2, v_3 \geq u_3\\
+        (v_1,v_2,v_3) & \text{otherwise}
+    \end{cases}
+\end{split}
+\end{equation*}
+
+Below we define the automaton $\mathcal{A}_2 = (S_2, I_2, T_2, F_2)$.
+Note that $\mathcal{A}_3$ is just $\mathcal{A}_2$, but processing in reverse order.
+We may therefore simply reverse the automaton $\mathcal{A}_2$ to obtain $\mathcal{A}_3$ \reed{cite}.
+
+The set of states, $S_2$, is given by $S_2 := (\Sigma_k^2)^3$.
+The initial state is $I_2 = ((0,0),(0,0),(0,0))$.
+The transition function, $T_2$, is defined below.
+Let $s = ((u_2,u_3),(v_2,v_3),(w_2,w_3))$ below.
+Again, its domain is the subset of tuples $S_2 \times \{1,\ldots,k\} \times \Sigma_k \times \Sigma_k$ that satisfy one of the following rules:
+
+\begin{itemize}
+    \item If $v_1 < u_1$, $v_2 = u_2$, $v_3 > 0$, and $v_3 - 1 = w_3$, then:
+    
+    $$T_2(s,u_1,v_1,w_1) := ((u_1,u_2),(v_1+1,0),(w_1,w_2))$$
+    
+    \item If $v_3 = w_3$, then:
+    
+    $$T_2(s,u_1,v_1,w_1) := ((u_1,u_2),(v_1,v_2),(w_1,w_2))$$
+\end{itemize}
+
+Finally, a state $s \in S_2$ is a final state if $v_1 = w_1$ and $v_2 = w_2$ (i.e., $F_2(s) := (v_1,v_2)$).
+
+We can think of each automaton as a predicate on finite sequences of input symbols.
+For example, $\mathcal{A}_0(a,b,c)$ holds when $a + b = c$, where $+$ denotes digit-wise addition.
+Using this notation, we define the general bounded addition automaton $+_{\alpha}$ which accepts four inputs: $\alpha$, $x$, $y$, and $z$, and accepts when $x +_{\alpha} y = z$.
+We can define this automaton in terms of the four automata defined above and standard logical operators and quantifiers, ensuring that there is an automaton that accepts precisely the desired tuples.
+
+Let $A^R$ denote the reversed automaton of $A$; i.e., if $A$ accepts $x$, then $A^R$ accepts $x^R$.
+
+\begin{equation*}
+    x +_{\alpha} y = z
+\end{equation*}
+\begin{equation*}
+    \iff
+\end{equation*}
+\begin{equation*}
+    \exists w : \mathcal{A}_0(x,y,w) \text{ and } \exists r : \mathcal{A}_1^R(a,w,r) \text{ and } \exists s : \mathcal{A}_2(a,r,s) \text{ and } \mathcal{A}_3^R(a,s,z)
+\end{equation*}
+
+\subsection{Automata Verification}
+
+Similar to \reed{cite pell critical exponent paper because they do a similar thing}, we verify that each of our automata is correct using Walnut.
+
+To do so, we use the following recursive definition of addition:
+
+\begin{equation*}
+    \begin{split}
+        0 + n =&~n \\
+        a + (b + 1) =&~(a + b) + 1\\
+    \end{split}
+\end{equation*}
+
+Therefore, we must define the \term{successor}, which can be done without reference to addition, making it's use in the correctness proof non-circular.
+
+\begin{definition}
+Let $\alpha \in \alpha_{<k}$ and let $x \in N_{\alpha}$.
+Then the \term{successor} of $x$ is the number $y \in N_{\alpha}$ such that $x <_{\alpha} y$ and for all $k \in N_{\alpha}$, either $k \leq_{\alpha} x$ or $y \leq_{\alpha} k$.
+\end{definition}
+
+That is, $y$ is the successor of $x$ if there are no numbers between $x$ and $y$, and $x <_{\alpha} y$.
+
+Now, we check the base case: for all $\alpha \in \alpha_{<k}$ and $x,y \in N_{\alpha}$, $x = y$ if and only if $x +_{\alpha} = y$.
+And the inductive case: for all $\alpha \in \alpha_{<k}$ and $u,v,x,y,z \in N_{\alpha}$, if $u$ is the successor of $y$ and $v$ is the successor of $z$, then $x +_{\alpha} y = z$ if and only if $x +_{\alpha} u = v$.
+
+Below is the output from Walnut for the $k=2$ case.
+First, defining the successor:
+
+\begin{lstlisting}[basicstyle=\scriptsize\ttfamily]
+def successor_2 "($recog_2(a,x) & $recog_2(a,y) & $lt_2(x,y) & Ak ($recog_2(a,k) 
+    => ($lte_2(k,x) | ~($lt_2(k,y)))))":
+    
+(recog_2(a,x)&recog_2(a,y)) has 4 states: 0ms
+ x<y has 2 states: 0ms
+  ((recog_2(a,x)&recog_2(a,y))&x<y) has 6 states: 1ms
+   k<=x has 2 states: 1ms
+    y<=k has 2 states: 1ms
+     (k<=x|y<=k) has 4 states: 3ms
+      (recog_2(a,k)=>(k<=x|y<=k)) has 9 states: 10ms
+       (A k (recog_2(a,k)=>(k<=x|y<=k))) has 9 states: 12ms
+        (((recog_2(a,x)&recog_2(a,y))&x<y)&(A k (recog_2(a,k)=>(k<=x|y<=k)))) has 6 states: 1ms
+total computation time: 30ms
+\end{lstlisting}
+
+Then proving the base case:
+\begin{lstlisting}[basicstyle=\scriptsize\ttfamily]
+eval base_proof_2 "Ez ($zero_2(z) & Aa,x,y (($recog_2(a,x) & $recog_2(a,y)) => 
+    ($eq_2(x,y) <=> $add_2(a,x,z,y))))":
+
+(recog_2(a,x)&recog_2(a,y)) has 4 states: 0ms
+ x=y has 1 states: 0ms
+  (x=y<=>add_2(a,x,0,y)) has 4 states: 2ms
+   ((recog_2(a,x)&recog_2(a,y))=>(x=y<=>add_2(a,x,0,y))) has 1 states: 2ms
+    (A a , x , y ((recog_2(a,x)&recog_2(a,y))=>(x=y<=>add_2(a,x,0,y)))) has 1 states: 3ms
+total computation time: 21ms
+\end{lstlisting}
+
+And finally, proving the inductive case:
+\begin{lstlisting}[basicstyle=\scriptsize\ttfamily]
+eval successor_proof_2 "Aa,x ($recog_2(a,x) => Ay ($recog_2(a,y) => Az ($recog_2(a,z) => 
+    Au (($recog_2(a,z) & $successor_2(a,y,u)) => Av (($recog_2(a,v) & $successor_2(a,z,v)) =>
+        ($add_2(a,x,y,z) <=> $add_2(a,x,u,v)))))))":
+        
+(recog_2(a,z)&successor_2(a,y,u)) has 10 states: 1ms
+ (recog_2(a,v)&successor_2(a,z,v)) has 6 states: 1ms
+  (add_2(a,x,y,z)<=>add_2(a,x,u,v)) has 344 states: 1095ms
+   ((recog_2(a,v)&successor_2(a,z,v))=>(add_2(a,x,y,z)<=>add_2(a,x,u,v))) has 222 states: 2892ms
+    (A v ((recog_2(a,v)&successor_2(a,z,v))=>(add_2(a,x,y,z)<=>add_2(a,x,u,v)))) has 249 states: 788ms
+     ((recog_2(a,z)&successor_2(a,y,u))=>(A v ((recog_2(a,v)&successor_2(a,z,v))=>
+        (add_2(a,x,y,z)<=>add_2(a,x,u,v))))) has 1 states: 768ms
+      (A u ((recog_2(a,z)&successor_2(a,y,u))=>(A v ((recog_2(a,v)&successor_2(a,z,v))=>
+        (add_2(a,x,y,z)<=>add_2(a,x,u,v)))))) has 1 states: 2ms
+       (recog_2(a,z)=>(A u ((recog_2(a,z)&successor_2(a,y,u))=>
+        (A v ((recog_2(a,v)&successor_2(a,z,v))=>
+            (add_2(a,x,y,z)<=>add_2(a,x,u,v))))))) has 1 states: 1ms
+        (A z (recog_2(a,z)=>(A u ((recog_2(a,z)&successor_2(a,y,u))=>
+            (A v ((recog_2(a,v)&successor_2(a,z,v))=>
+                (add_2(a,x,y,z)<=>add_2(a,x,u,v)))))))) has 1 states: 0ms
+         (recog_2(a,y)=>(A z (recog_2(a,z)=>(A u ((recog_2(a,z)&successor_2(a,y,u))=>
+                (A v ((recog_2(a,v)&successor_2(a,z,v))=>(add_2(a,x,y,z)<=>add_2(a,x,u,v))))))))) has 1 states: 1ms
+          (A y (recog_2(a,y)=>(A z (recog_2(a,z)=>(A u ((recog_2(a,z)&successor_2(a,y,u))=>
+                (A v ((recog_2(a,v)&successor_2(a,z,v))=>
+                    (add_2(a,x,y,z)<=>add_2(a,x,u,v)))))))))) has 1 states: 0ms
+           (recog_2(a,x)=>(A y (recog_2(a,y)=>(A z (recog_2(a,z)=>
+                (A u ((recog_2(a,z)&successor_2(a,y,u))=>
+                    (A v ((recog_2(a,v)&successor_2(a,z,v))=>
+                        (add_2(a,x,y,z)<=>add_2(a,x,u,v))))))))))) has 1 states: 0ms
+            (A a , x (recog_2(a,x)=>(A y (recog_2(a,y)=>
+                (A z (recog_2(a,z)=>(A u ((recog_2(a,z)&successor_2(a,y,u))=>
+                    (A v ((recog_2(a,v)&successor_2(a,z,v))=>
+                        (add_2(a,x,y,z)<=>add_2(a,x,u,v)))))))))))) has 1 states: 0ms
+total computation time: 5549ms
+\end{lstlisting}
+
+\subsection{Discussion}
+
+Though attempting to prove properties of even a single Sturmian word can often result in long, tedious proofs, doing the same with our automata and Walnut is generally quite simple and straightforward \reed{find some papers who just prove one property of fib word, for example}.
+This ease makes exploring properties of various Sturmian words, or indeed, any automatic sequence, much easier.
+We put this into practice in the following two sections, proving many known, and some unknown \reed{I think?} theorems about Sturmian words.
+
+Many of the following theorems, in particular those in Section~\ref{sec:specific-theorems}, were proven using an ordinary laptop, and require no more than a few minutes at most to run.
+However, many \reed{most?} of those found in Section~\ref{sec:conjectures} took much longer, because the automata for addition recognition are far larger, primarily in transitions, than those for any single Ostrowski numeration system.
+Proving such propositions often exceeded the limits of Walnut or our computer, which had 52GB of RAM.
+Nevertheless, we were still able to prove the conjectures for several cases.
+Future work could improve the efficiency of the algorithms used and remove some of Walnut's limitations which merely exist because of its implementation.

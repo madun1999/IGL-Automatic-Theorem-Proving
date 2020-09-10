@@ -1,0 +1,65 @@
+\documentclass[10pt,usenames,dvipsnames]{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage[margin=1.25in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{kpfonts}
+\usepackage{mathpartir}
+\usepackage{subfigure}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{xspace}
+\usepackage{tikz}
+\usepackage{tkz-euclide}
+
+\usepackage[
+backend=biber,
+style=numeric,
+sorting=nty]{biblatex}
+
+\addbibresource{biblio.bib}
+
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=blue,
+}
+
+\author{Reed Oei, Eric Ma, Tatum Schmidt, Abdullah Dean, \\Christian Schulz, Philipp Hieronymi}
+
+\usepackage{graphicx}
+\graphicspath{ {./images/} }
+
+\input{Pecan/pecan-lang.tex}
+\input{Pecan/macros.tex}
+
+\title{Pecan \\
+    \large An Automated Theorem Prover}
+\begin{document}
+
+\maketitle
+
+\input{introduction}
+\input{background}
+\input{usage}
+\input{implementation}
+\input{features}
+\input{sturmian-words}
+\input{related-work}
+
+\printbibliography
+
+\appendix
+\input{automata-format}
+\input{optimization}
+\input{praline}
+
+\end{document}

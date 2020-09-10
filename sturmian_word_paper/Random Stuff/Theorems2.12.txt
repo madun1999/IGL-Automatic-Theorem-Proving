@@ -1,0 +1,51 @@
+//section 3.12
+//Result: C2 and C3 contain grouped factors.
+
+//Automaton C_eq_rt2: (i,j,n) -> substrings C2[i...i+n-1] and C2[j...j+n-1] are the same. 
+//Theorem: C2 and C3 contain grouped factors
+
+def C_eq_rt2 "?lsd_rt2 Aa a<n => C2[i+a] = C2[j+a]":
+
+eval grouped_factors_rt2 "?lsd_rt2 An n > 0 => (
+  Em m > 0 & Ems ms > m & (
+    Ai i > 0 => (
+      Ej m <= j & j <= ms & (
+        $C_eq_rt2(i,j,n)
+        &
+        (Ag m<=g & g<=ms & $C_eq_rt2(i,g,n) => g = j)
+       )
+    )
+  )
+)":
+
+def C_eq_rt3 "?lsd_rt3 Aa a<n => C3[i+a] = C3[j+a]":
+
+eval grouped_factors_rt3 "?lsd_rt3 An n > 0 => (
+  Em m > 0 & Ems ms > m & (
+    Ai i > 0 => (
+      Ej m <= j & j <= ms & (
+        $C_eq_rt3(i,j,n)
+        &
+        (Ag m<=g & g<=ms & $C_eq_rt3(i,g,n) => g = j)
+       )
+    )
+  )
+)":
+
+// Below is a version for 2-bounded Sturmian words, which accepts a such that a has grouped factors. 
+// I think it's wrong though, because it doesn't accept 1*, but tbh I'm not actually sure how to interpret this because the "a" should really be an infinite string
+
+def repetition_2 "?lsd_base_2 n > 0 & i > 0 & j > 0 & $recog_2(a,i) & $recog_2(a,j) & $recog_2(a,n) &
+                            At $recog_2(a,t) & t < n => (Eti $add_2(a,i,t,ti) & Etj $add_2(a,j,t,tj) & C_2[ti] = C_2[tj])":
+
+eval grouped_factors_2 "?lsd_base_2 An $recog_2(a,n) & n > 0 => (
+  Em $recog_2(a,m) & m > 0 & Ems $recog_2(a,ms) & ms > m & ( 
+    Ai $recog_2(a,i) & i > 0 => (
+      Ej $recog_2(a,j) & m <= j & j <= ms & ( 
+        $repetition_2(a,i,j,n)
+        &
+        (Ag $recog_2(a,g) & m<=g & g<=ms & $repetition_2(a,i,g,n) => g = j)
+       )
+    )   
+  )
+)":

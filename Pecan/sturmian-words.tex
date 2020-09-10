@@ -1,0 +1,732 @@
+\section{Case Study: Sturmian Words}\label{sec:sturmian-words}
+
+One of the interesting applications of a theorem prover like Pecan is its ability to decide properties of automatic words, such as Sturmian words.
+Not only can Pecan prove properties of such words, but it can also act as a (counter)example generator because of the constructive nature of its decision procedure: if property is \textbf{not} true, then Pecan can give a counterexample of exactly when it fails.
+In this section, we explore several properties of Sturmian words using Pecan.
+
+In Section~\ref{sec:sturmian-background} we give background definitions for words in general and then define Ostrowski numeration systems and Sturmian words.
+In Section~\ref{sec:ostrowski-rep}, we describe the automata we created to decide properties of Sturmian words.
+Finally, in Section~\ref{sec:sturmian-theorems}, we automatically prove many theorems about Sturmian words. \reed{some of which are new?}
+
+\subsection{Background}\label{sec:sturmian-background}
+
+\subsubsection{Ostrowski Numeration Systems}\label{sec:ostrowski-rep}
+We write the \term{continued fraction} of a real number $x$ as a sequence of natural numbers  $x = [a_0,a_1,a_2,\ldots]$ such that 
+\[
+x = a_0+\cfrac{1}{a_1+\cfrac{1}{a_2+\cfrac{1}{a_3+\ddots}}}
+\]
+
+If the sequence is infinite and ultimately periodic with repeating part $a_i\dots a_j$, then we write this as $x = [a_0,a_1,a_2,\dots \overline{a_i,\dots,a_j}]$.
+
+We make use of the \term{convergents} of the continued fraction to define an Ostrowski-$\alpha$ numeration system, where $\alpha$ is some positive irrational number.
+
+\begin{equation*}
+    \frac{p_n}{q_n} = [a_0, a_1, a_2, \ldots, a_n]
+\end{equation*}
+
+The sequences $p$ and $q$ are given by the following recursive definition.
+
+\begin{equation}\label{eqn:conv-def}
+\begin{split}
+    p_{-2} = 0, \quad p_{-1} = 1, \quad p_n = a_n p_{n-1} + p_{n-2} \quad \text{for} \quad n > 0\\
+    q_{-2} = 1, \quad q_{-1} = 0, \quad q_n = a_n q_{n-1} + q_{n-2} \quad \text{for} \quad n > 0
+\end{split}
+\end{equation}
+
+% The convergents approximate $\alpha$, specifically:
+
+% \begin{equation*}
+%     \left| \alpha - \frac{p_n}{q_n} \right| < \frac{1}{q_n q_{n+1}} < \frac{1}{q_n^2} \quad \text{for all} \quad n.
+% \end{equation*}
+
+The \term{semiconvergent} sequences $p_{n,\ell}$ and $q_{n,\ell}$ are defined so that
+\[
+    \frac{p_{n,\ell}}{q_{n,\ell}} = \frac{\ell p_{n-1} + p_{n-2}}{\ell q_{n-2} + q_{n-2}}
+\]
+for $1 \leq \ell < a_n$.
+
+Then every natural number $n$ may be written uniquely as a word $b_j b_{j-1} \cdots b_0$ where each $b_i \in \mathbb{N}$, such that $b_0 < a_0$, $b_i \leq a_i$, and if $b_i = a_i$, then $b_{i-1} = 0$~\cite{Ostrowski1922}.
+That is, the following equation holds.
+
+\begin{equation*}\label{eqn:ostrowski-def}
+    n = \sum_{i=0}^j b_i q_i
+\end{equation*}
+
+We call this sequence $b_j b_{j-1} \cdots b_0$ the \term{canonical Ostrowski-$\alpha$ representation of $n$}, or simply the \term{Ostrowski-$\alpha$ representation $n$} when it is umabiguous.
+We write the canonical Ostrowski-$\alpha$ representation of $n$ as $\mathcal{O}_{\alpha}(n)$.
+
+For example, when $\alpha = \sqrt{2}$, the sequence $(q_n)$ starts out $1,2,5,12,\ldots$.
+We can write $14_{10}$ in the Ostrowski-$\sqrt{2}$ numeration system as: $0\cdot1 + 1\cdot2 + 0\cdot5 + 1\cdot12$, or $1010_{\sqrt{2}}$.
+Note there are two ways to write each number: least significant digit (LSD) and most significant digit MSD.
+Above, $1010_{\sqrt{2}} = 14_{10}$ is written in the standard MSD form, however, our automata use LSD because it is more natural to create such automata for infinite strings, as they simply end in $0^\omega$ instead of having to add an additional symbol to the alphabet to indicate an end of number.
+
+\subsubsection{Sturmian Words}
+
+We now define \term{characteristic Sturmian words}.
+
+Consider the standard coordinate plane, and some irrational number $\alpha \in (0,1)$.
+Draw the line $y = \alpha x$.
+We can define the \term{Sturmian words} via a \term{cutting sequence} given by this line in the standard coordinate plane; that is, as a sequence of letter corresponding to the grid lines crossed by the line.
+We define the word $\text{cut}_{\alpha}$ as follows:
+$\text{cut}_{\alpha}[n] = 0$ if the $n$-th line crossed by $y = \alpha x$ is a vertical line, and $\text{cut}_{\alpha}[n] = 1$ if it is a horizontal line.
+
+Then the \term{characteristic Sturmian word with slope $\alpha$}, $C_{\alpha}$ is given by $C_{\alpha} = \text{cut}_{\alpha/(1-\alpha)}$~\autocite[Theorem 9.2.1]{auto_seq}.
+Note that the first index of $C_{\alpha}$ is taken to be $1$, not $0$.
+Using this procedure, we can see that $C_{\varphi}$, shown in Figure~\ref{fig:geom-sturmian-phi} starts out $10110101\ldots$.
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+       \tkzInit[xmax=4,ymax=5,xmin=0,ymin=0]
+       \tkzGrid
+       \tkzAxeXY
+       \draw[thick,latex-latex] (0,0) -- (3,3*1.61803) node[anchor=south west] {};
+       
+       \foreach \x in {1,2,3}{
+            \node[fill=black, circle, inner sep=1.5pt, label=right:$0$] at (\x,\x*1.61803) {};
+       }
+       
+       \foreach \y in {1,2,3,4,5}{
+            \node[fill=black, circle, inner sep=1.5pt, label=above:$1$] at (\y/1.61803,\y) {};
+       }
+    \end{tikzpicture}
+    \caption{The characteristic Sturmian word $C_{\varphi}$, defined by the cutting sequence $\text{cut}_{\varphi}$ with $\varphi = \frac{1 + \sqrt{5}}{2}$}
+    \label{fig:geom-sturmian-phi}
+\end{figure}
+
+There is an intimate connection between the Ostrowski-$\alpha$ numeration system and the characteristic Sturmian word with slope $\alpha$, given by the following theorem (\autocite[Theorem 9.1.15]{auto_seq}).
+
+\begin{theorem}\label{thm:ostrowski-sturmian}
+Let $n \geq 1$ be an integer with Ostrowski-$\alpha$ representation: $b_j b_{j-1} \cdots b_0$.
+Then $C_{\alpha}[n] = 1$ if and only if $b_j b_{j-1} \cdots b_0$ ends in an odd number of $0$'s.
+\end{theorem}
+
+In particular, this means that $C_{\alpha}$ is an automatic sequence, so we can create an automaton $\mathcal{C}_{\alpha}$ such that $\mathcal{C}(n)$ is true if and only if the $n$-th digit of $C_{\alpha}$ is $1$.
+We define:
+\[
+    \mathcal{C}_{\alpha}[n] = 
+    \begin{cases}
+        1 & \tif C_{\alpha}(n) \\
+        0 & \owise
+    \end{cases}
+\]
+
+\subsubsection{Conventions}
+
+Note that all quantifiers over Latin letters (e.g., $i, j, k, \ell, n, m$) are over the natural numbers, specifically over their Ostrowski-$\alpha$ representations.
+When unclear from context which $\alpha$ is the base of the numeration system, we write $\N_{\alpha}$ to denote the Ostrowski-$\alpha$ representations of the natural numbers.
+Quantifiers over the Greek letters (e.g., $\alpha$) are over the irrational numbers in $(0, 1)$, specifically over their continued fraction representations.
+The real number and its continued fraction representation are used interchangably.
+For example, when we say that $\alpha$ is eventually $1$, we mean that $\alpha = [a_1, a_2, \ldots, a_n, \overline{1}]$.
+
+In all contexts below, unless otherwise noted, we use \term{Sturmian word} as a shorthand to refer to a \term{characteristic Sturmian word}.
+
+\subsection{Representing Ostrowski Numeration Sytems}
+
+In order to implement a decision procedure for Sturmian words, we need automata to recognize the following properties of Ostrowski-$\alpha$ numeration systems:
+
+\reed{Maybe go into some more detail (e.g., that valid representations need to be of finite length).}
+
+\begin{itemize}
+    \item \pecaninline{bco_valid(a,x)}: If $x$ is a valid representation in the Ostrowski-$\alpha$ numeration system, given $\alpha$.
+    We also define \pecaninline{ostrowski(x,a) :=  bco_valid(a,x)} for convenience.
+    
+    \item \pecaninline{bco\_leq(x,y)}: For two valid representations $x$ and $y$, if $x \leq y$.
+    
+    \item \pecaninline{bco\_adder(a,x,y,z)}: For three valid representations, $x$, $y$, and $z$, if $x + y = z$, given $\alpha$.
+\end{itemize}
+
+We encode representations of natural numbers in LSD in Ostrowski numeration systems using $\Sigma = \{0,1,2\}$ with each digit as a binary number in LSD and digits separated by $2$.
+The encoding is the same for the slope $\alpha$, but note that because $\alpha \in (0, 1)$, we always have $\alpha = [0,a_1,a_2,\ldots]$, and so we omit the first coefficient, $0$, in our automata.
+So an automaton accepting $([1][2])^{\omega}$ means that $\alpha = [0,\overline{1,2}]$.
+Note that the continued fraction coefficients are unbounded, and so may be larger than $9$.
+This matters because the string $8912$ could mean $[8,9,1,2]$, $[8,9,12]$, or $[8912]$, etc., so we write $[8][9][12]$ as appropriate to clarify what the string represents; however, the square brackets are \textbf{not} part of the language.
+Finally, note that the second property can be decided without the parameter $\alpha$, but the first and third require it.
+
+It is easy to encode the first two properties, but encoding a general addition automaton for Ostrowski numeration systems is more difficult. 
+
+To see how we may construct an automaton to recognize Ostrowski addition for general continued fraction coefficients, we first define the vector space $\mathbb{Q}^\omega_{fin} = \oplus_{i < \omega} \mathbb{Q}$, i.e. the direct sum of $\omega$ many copies of $\mathbb{Q}$. This can also be constructed (with appropriate addition and multiplication) as a quotient of the language $\mathbb{Q}^*$ under the action of adding or removing a leading zero, so we will identify the vector space with $\mathbb{Q}^*$ for simplicity. Then the map:
+
+$$v_\alpha : \mathbb{Q}^* \to \mathbb{R}, b_j b_{j-1} \dots b_0 \mapsto \sum_{i=0}^j b_i q_i$$
+
+is linear, i.e. a homomorphism of $\mathbb{Q}$-vector spaces. Therefore, $\ker v_\alpha$, the set of Ostrowski-$\alpha$ representations of zero (with \textit{rational} coefficients), is itself a $\mathbb{Q}$-vector space. This vector space has a basis, which we call the \textit{carry basis,} consisting of all strings of the form $1(-a_i)(-1)0^{i-2}$ as well as the string $1(-a_1)$. It is elementary to check that this is a basis; one need only verify that
+
+\begin{itemize}
+	\item these vectors are all in $\ker v_\alpha$;
+	\item they are all linearly independent, as they have different \textit{supports,} i.e. different indices of nonzero coefficients;
+	\item by induction, we can add and subtract copies of these vectors from any initial string in $\ker v_\alpha$ in order to reduce it to a string of length $1$, which must be $0$.
+\end{itemize}
+
+Now in order to recognize whether the sum of two numbers with standard Ostrowski-$\alpha$ representations $(x_i)_i, (y_i)_i$ equals a number with standard Ostrowski-$\alpha$ representation $(z_i)_i$, after verifying that all three representations are standard, we need only check that $(x_i + y_i - z_i)_i$ is in $\ker v_\alpha$. In order to do this, we can use a division-like algorithm, subtracting multiples of the carry basis vectors from $(x_i + y_i - z_i)_i$ and checking if the last coefficient (the remainder) ends up being zero. Note that because the first coefficient in each carry basis vector is $1$, we will never need to use non-integer multiples of the carry basis vectors, so the entire algorithm can be carried out with all coefficients in $\mathbb{Z}$. In fact \christian{TODO: should we try to say / figure out why this is, or should we not bother?}, the only multiples of carry basis vectors that are necessary are $1$, $0$, and $-1$. So if none of those three coefficients properly zero out the current digit, we can immediately reject. This means that recognizing Ostrowski summation can be done with a finite automaton whose alphabet contains integers $\mathbb{Z}$ as follows:
+
+\christian{TODO: Put Luke's automaton figure here. Do we have \TeX source for it?}
+
+This automaton is uniform in $\alpha$ in the sense that it takes the continued fraction coefficients of $\alpha$ as additional input. Note then that each transition in this automaton, as well as the calculation of $x_i + y_i - z_i$, is an elementary calculation involving addition, subtraction, and constant numbers. Therefore, when given a numeric representation with finite alphabet wherein these operations are regular (in particular, binary representation), we can produce a finite automaton to recognize this relation where the strings $(a_i)_i, (x_i)_i, (y_i)_i, (z_i)_i$ are encoded using said representation. So this allows us to construct a finite automaton that takes as input these four strings, with each coefficient encoded in binary and delimiters between them, and recognizes whether the input is a valid sum in Ostrowski-$\alpha$ representation.
+	
+\reed{Note: the original automaton was in MSD, but we converted it to LSD.}
+
+% \eric{Attempt} Luke Schaeffer
+% \eric{We either cite from Luke or write it ourselves. If we were to write it ourself, then}
+% \eric{Sketch:
+% \begin{enumerate}
+%     \item 0-space vector space
+%     \item Carry base representation
+%     \item  Coefficients are $\{-1,0,1\}$
+%     \item  The first automaton with infinite alphabet has finite number of states (at most 10, one garbage, 9 labeled $\{-1,0,1\}\times \{-1,0,1\}$)
+%     \item  We can transform the infinite alphabet into binary one. 
+% \end{enumerate}
+
+% }
+% \eric{We do have enough information about how it works but maybe better}
+
+
+\subsubsection{Derived Predicates}
+
+Using the basic definitions above, we can encode the following useful predicates.
+
+\begin{itemize}
+    \item \pecaninline{bco\_zero(x)}: Checking whether $x$ is the representation of $0$, defined as $z$ such that $\forall y. z \leq y$.
+    
+    \item \pecaninline{bco\_eq(x,y)}: Checking whether $x = y$, defined as $x \leq y \land y \leq x$.
+    
+    \item \pecaninline{bco\_succ(a,x,y)}: The \term{successor} of $x$ (i.e., $x + 1$), defined as the number $y$ such that $x < y$ and $\forall z. z \leq x \lor y \leq z$.
+\end{itemize}
+
+\subsubsection{Proofs of Correctness}
+
+\reed{Lots of these come from Luke's walnut code. Is there something we can cite, or should we include him as an author or something?}
+
+Using Pecan, we can prove that the automata we have created are correct in a number of ways, by checking basic properties of addition and the natural numbers.
+
+Because we have defined the successor of $x$ without reference to the addition automaton, we can use it to check the correctness of addition.
+We check that our addition automaton conforms to the standard definition of addition on the natural numbers:
+\begin{align*}
+    0 + y &= y \\
+    s(x) + y &= s(x + y)
+\end{align*}
+
+where $s(a)$ denotes the successor of $a$.
+We check that our adder satisfies this property using the following Pecan code:
+
+\begin{pecan}
+Restrict x,y,z are ostrowski(a).
+Theorem ("Addition base case.", {
+    foralla. forallx,y,z. 
+    if bco_zero(x) then 
+        (bco_adder(a, x, y, z) <=> bco_eq(y, z))
+}).
+
+Theorem ("Addition inductive case.", {
+    foralla. forallx,y,z,u,v. 
+    if (bco_succ(a,u,x) & bco_succ(a,v,z)) then 
+        (bco_adder(a,x,y,z) <=> bco_adder(a,u,y,v))
+}).
+\end{pecan}
+
+We also verify that every natural number has a unique successor in each Ostrowski-$\alpha$ numeration system, and every natural number (apart from $0$) have a predecessor, where the predecessor of $y$ is $x$ such that \pecaninline{bco_succ(a,x,y)} holds.
+We also prove some properties about the relationship between \pecaninline{bco_leq} and \pecaninline{bco_adder}.
+\begin{pecan}
+Theorem ("Every valid Ostrowski-a representation has a successor.", {
+    forall a, x. 
+    if bco_valid(a, x) then 
+        exists u. bco_succ(a,x,u)
+}).
+
+Theorem ("All natural numbers other than 0 have a predecessor.", {
+    forall a, x. 
+    if bco_valid(a,x) then 
+        (bco_zero(x) | (exists u. bco_succ(a,u,x)))
+}).
+
+Theorem ("For all x, y, and z, we have x <= y iff x + z <= y + z", {
+    forall a. forall x,y,z,u,v. 
+    if (bco_valid3(a,x,y,z) & bco_valid2(a,u,v) & bco_adder(a,x,z,u) & bco_adder(a,y,z,v)) then
+        (bco_leq(x, y) <=> bco_leq(u, v))
+}).
+
+Theorem ("If x <= y, then there is some z so that x + z = y.", {
+    forall a. forall x,y. 
+    if bco_valid2(a,x,y) then 
+        (bco_leq(x,y) <=> exists z. bco_adder(a,x,z,y))
+}).
+\end{pecan}
+
+\reed{How many of these are interesting enough to include here}
+
+There are many other simple correctness properties we check, such as $\leq$ being a total order, which can be found in our project repository at \url{https://github.com/ReedOei/SturmianWords}.
+
+\subsection{Results}\label{sec:sturmian-theorems}
+
+\reed{Report performance statistics and automaton sizes probably}
+
+In this section we use Pecan to prove many theorems about Sturmian words.
+
+Because comparing factors of Sturmian words is so widely useful, we create an automaton called $\texttt{factor\_lt}(\alpha, i,j,k)$ which holds if and only if $C_{\alpha}[i..j] = C_{\alpha}[k..\ell]$ where $\ell = j - i + k$ and $i \leq k$.
+This last restriction reduces the size of the automaton Pecan must complement to construct \texttt{factor\_lt}, improving performance, and in most cases it poses no problems.
+In the cases that we truly need to remove the restriction, we can simply write the \term{bidirectional} version: $\texttt{factor\_lt}(\alpha,i,j,k) \lor \texttt{factor\_lt}(\alpha,k,\ell,i)$ where $\ell = j - i + k$.
+Throughout this paper, we write $C_{\alpha}[i..j] = C_{\alpha}[k..\ell]$ to mean $\texttt{factor\_lt}(\alpha,i,j,k)$ or the bidirectional version (whichever is appropriate for the situation) for readability reasons.
+Note that the exact predicates and many of the intermediate automata are available in the following GitHub repository: \url{https://github.com/ReedOei/SturmianWords}.
+
+As the automata tend to be large, almost all having 100 or more states and hundreds of edges, displaying them graphically provides little insight, and so we omit such diagrams below.
+
+\subsubsection{Periodicity}
+
+We begin with a well-known result about Sturmian words: that they are not eventually periodic.
+In fact, a binary $\omega$-word is a Sturmian word if and only if it is a balanced, aperiodic binary word (\autocite[Theorem 2.1.5]{zbMATH01737190}).
+
+\begin{definition}
+    An $\omega$-word $w$ is \term{eventually periodic with period $p$} for some $p > 0$ if there is some natural number $n$ so that $w[i] = w[i + p]$ for all $i > n$.
+\end{definition}
+
+\begin{theorem}
+No Sturmian word is eventually periodic.
+\end{theorem}
+\begin{proof}
+Using Pecan, we construct an automaton recognizing the following property:
+\[
+    \texttt{eventually\_periodic}(\alpha, p) := p > 0 \land \exists n. \forall i > n. C_{\alpha}[i] = C_{\alpha}[i + p]
+\]
+
+In Pecan, this can be written as:
+
+\begin{pecan}
+Restrict a is bco_standard.
+Restrict i, n, p are ostrowski(a).
+eventually_periodic(a, p) := 
+    p > 0 & existsn. foralli. if i > n then $\$$C[i] = $\$$C[i + p]
+\end{pecan}
+
+The resulting automaton has $4941$ states and $35776$ edges, and takes \pecaninline{117.78} seconds to build.
+Finally, we use Pecan to construct the automaton recognizing the following, which takes \pecaninline{35.3} seconds.
+\[
+    \forall \alpha, p. \lnot \texttt{eventually\_periodic}(\alpha, p)
+\]
+
+In Pecan, we write this statement as:
+
+\begin{pecan}
+Theorem ("Sturmian words are not eventually periodic", {
+    foralla, p. if p > 0 then !eventually_periodic(a, p)
+}) .
+\end{pecan}
+
+The resulting automaton is the $\top$-automaton, which proves the theorem.
+\end{proof}
+
+In the rest of this paper, we omit the exact input given to Pecan, and instead write the property definitions in a more typical style for readability.
+Please refer to the repository linked above for the exact inputs.
+
+\subsubsection{Powers}
+
+\reed{Find other papers which prove these same theorems to cite.}
+
+Next, we prove the follow results about \term{powers} of Sturmian words.
+
+\begin{definition}
+    A finite subword $x$ of a (finite or $\omega$) word $w$ is a \term{$n$-th power} if $x = y^n$ for some finite word $y$.
+    We call a $2$nd power a \term{square}, and a $3$rd power a \term{cube}.
+    
+    A word that does not contain $n$-th powers is called \term{$n$-th power free} (or \term{square-free}, \term{cube-free} when appropriate).
+\end{definition}
+
+\begin{theorem}
+    Sturmian words contain squares.
+\end{theorem}
+\begin{proof}
+Using Pecan, we construct an automaton recognizing the following property, stating that there is a square of length $n$ starting at $C_{\alpha}[i]$.
+\[
+    \texttt{square}(\alpha, i, n) := n > 0 \land i > 0 \land \forall j. i \leq j < i + n. C_{\alpha}[j] = C_{\alpha}[j + n]
+\]
+
+The resulting automaton has 80 states and 400 edges.
+Finally, Pecan proves the following in \pecaninline{0.02} seconds.
+\[
+    \forall \alpha. \exists i, n. \texttt{square}(\alpha, i, n)
+\]
+\end{proof}
+
+In fact, all sufficiently long (i.e., longer than $4$ letters) binary words contain squares.
+However, it is still useful to have create an automaton for recognizing squares, because it encodes quite a bit more information than just that squares exist: it also tells us exactly where they are in the Sturmian word.
+Furthermore, we can use an automaton recognizing squares to efficiently build automata recognizing higher-powers.
+We now reprove the following theorem from \autocite[Proposition 4.1]{PELTOMAKI2015886} and \autocite[Theorem 1]{DAMANIK2003377}.
+\begin{theorem}
+    If $n$ is the order of a power in $C_{\alpha}$, then $n = q_{n,\ell}$ for some $n$ and $\ell$; that is, $n$ is the denominator of a semiconvergent of $\alpha$.
+\end{theorem}
+\begin{proof}
+    First, note that if $n$ is the denominator of a semiconvergent of $\alpha$, then its Ostrowski-$\alpha$ representation is of the form $0^*1b$ for some digit $b$ (which may be zero).
+    We easily manually construct an automaton accepting such representations, called $\texttt{semiconvergent}$.
+    Note that we only need to prove the theorem for squares, because any higher power starts with a square.
+    
+    We now use Pecan to prove the following statement is true
+    \[
+        \forall \alpha, i > 0, n > 0. \texttt{square}(a,i,n) \implies \texttt{semiconvergent}(n)
+    \]
+    Pecan proves the theorem in \pecaninline{0.21} seconds.
+\end{proof} 
+
+Sturmian words have the interesting property that they start with arbitrarily long squares (\autocite[Theorem 1]{Dubickas2009}).
+
+\begin{theorem}
+    All Sturmian words start with arbitrarily long squares.
+\end{theorem}
+\begin{proof}
+Using Pecan and the automaton for squares that we constructed earlier, we prove the following predicate is true, which takes \pecaninline{0.40} seconds.
+\[
+    \forall \alpha. \forall j. \forall n. \exists m > n. \texttt{square}(a, j, m)
+\]
+\end{proof}
+
+The following two theorems are consequences of \autocite[Theorem 4]{DAMANIK2003377}, which we can prove using Pecan.
+\reed{Maybe remove this theorem because it's a consequence of the next theorem about cubic prefixes and it's basically identical to the one for squares?}
+\begin{theorem}
+    All Sturmian words contain cubes.
+\end{theorem}
+\begin{proof}
+We construct an automaton recognizing the following property, stating that there is a cube of length $n$ starting at $C_{\alpha}[i]$.
+
+We can use the previously defined square to define cubes, as follows:
+\[
+    \texttt{cube}(\alpha, i, n) := \texttt{square}(\alpha, i, n) \land \texttt{square}(\alpha, i + n, n)
+\]
+
+Finally, Pecan proves the following in \pecaninline{0.25} seconds.
+\[
+    \forall \alpha. \exists i, n. \texttt{cube}(\alpha, i, n)
+\]
+\end{proof}
+
+Similar to squares, we have the following property about cubic prefixes
+\reed{citation? or new?}
+\begin{theorem}
+    A Sturmian word starts with arbitrarily long cubes if and only if its continued fraction is not eventually 1.
+    \reed{Because pictures are nice, I could change this into a more picture-y proof (the automata should be quite small) by creating the picture of the automata accepting Sturmian words with arbitrarily long cubic prefixes. Do we want that?}
+\end{theorem}
+\begin{proof}
+First, we manually build an automaton recognizing $\alpha$ such that the continued fraction of $\alpha$ is not eventually one, called $\texttt{eventually\_one}$.
+
+Pecan proves the following in \pecaninline{2.37} seconds:
+\[
+    \forall \alpha. 
+    (\lnot \texttt{eventually\_one}(\alpha)) 
+    \iff 
+    \forall n.
+    \exists m > n. \texttt{cube}(a, 1, m)
+\]
+\end{proof}
+
+\begin{theorem}
+    If $\alpha \in (0,1)$ is not eventually one, then $C_{\alpha}$ contains a fourth power.
+\end{theorem}
+\begin{proof}
+We construct an automaton recognizing the following property, stating that there is a fourth power of length $n$ starting at $C_{\alpha}[i]$.
+We can use the previously defined square and cube definitions to define fourth powers, as follows:
+\[
+    \texttt{fourth\_pow}(\alpha, i, n) := \texttt{square}(\alpha, i, n) \land \texttt{cube}(\alpha, i + n, n)
+\]
+
+Finally, Pecan proves the following in \pecaninline{0.56} seconds.
+\[
+    \forall \alpha. \lnot \texttt{eventually\_one}(\alpha) \implies \exists i, n. \texttt{fourth\_pow}(\alpha, i, n)
+\]
+\end{proof}
+
+The converse is not true, and using Pecan, we can easily see why not.
+We can ask Pecan for counterexamples to the converse using the following commands.
+
+\begin{pecan}
+Restrict i, n are ostrowski(a).
+has_fourth_pow(a) := existsi,n. n > 0 & fourth_pow(a,i,n)
+Example (ostrowskiFormat, { 
+    bco_standard(a) & eventually_one(a) & has_fourth_pow(a) 
+}).
+\end{pecan}
+
+Pecan responds with:
+
+\begin{pecan}
+[(a,[6][3]([1])^$\omega$)]
+\end{pecan}
+
+Meaning that $\alpha = [0,6,3,\overline{1}]$ is a counterexample (recall that $\alpha \in (0,1)$, so the first digit of the continued fraction is always $0$); indeed, $C_{\alpha}$ starts as $000001\ldots$, so there is a fourth power immediately at the beginning of it.
+Using a sufficiently high starting coefficient, $\alpha = [a_0, a_1, \ldots]$, we can get any power, because the representations for $x$ with $0 < x < a_0$ will all start with an even number of zeros, and so $C_{\alpha}[x] = 0$.
+
+\subsubsection{Mirror Invariance}
+
+It will be useful to define a \term{reverse factor}:
+\[
+    \texttt{reverse\_factor}(a, i, j, \ell) := 0 < i < j \land \ell > 0 \land \forall t. i \leq t < j \implies C_{\alpha}[t] = C_{\alpha}[\ell + i - t] 
+\]
+That is, $\texttt{reverse\_factor}(a, i, j, \ell)$ is true when $C_{\alpha}[i..j] = (C_{\alpha}[k + 1..\ell + 1])^R$, where $\ell - k = j - i$.
+We omit $k$ from the definition, because it is not necessary and would only serve to make the automaton larger.
+
+\begin{definition}
+    A word $w$ is called \term{mirror-invariant} if for every factor $x$ of $w$, the word $x^R$ is also a factor of $w$.
+\end{definition}
+
+We now recover the following proposition (\autocite[Proposition 2.1.19]{zbMATH01737190}):
+\begin{theorem}
+    All Sturmian words are mirror-invariant.
+\end{theorem}
+\begin{proof}
+    We first define that a single factor $C_{\alpha}[i..j]$ is mirror-invariant if it satisfies:
+    \[
+        \texttt{mirror\_invariant}(\alpha,i,j) := \exists \ell. \texttt{reverse\_factor}(a,i,j,\ell)
+    \]
+    This takes \pecaninline{1135.38} seconds (about \pecaninline{19} minutes), and has $520$ states and $4442$ edges.
+    
+    Then using Pecan, we prove the following theorem, which takes \pecaninline{16.6} seconds:
+    \[
+        \forall \alpha, i,j. 0 < i < j \implies \texttt{mirror\_invariant}(a,i,j)
+    \]
+\end{proof}
+
+\subsubsection{Palindromes}
+
+\begin{definition}
+    A word $x$ is a palindrome if $x = x^R$.
+\end{definition}
+
+Using the reverse factor automaton, is it quite easy to define a palindrome:
+\[
+    \texttt{palindrome}(\alpha, i, n) := \texttt{reverse\_factor}(a, i, i + n, i + n - 1)
+\]
+The resulting automaton has $342$ states and $1982$ edges, and takes \reed{get this number} seconds to build.
+
+\begin{theorem}
+    All Sturmian words start with arbitrarily long palindromes.
+\end{theorem}
+\begin{proof}
+Pecan confirms the following predicate is true in \pecaninline{11.11} seconds.
+\[
+    \forall \alpha. \forall m. \exists n. n > m \land \texttt{palindrome}(a, 1, n)
+\]
+\end{proof}
+
+\begin{theorem}
+    All Sturmian words contain palindromes of every length $n \geq 0$.
+\end{theorem}
+\begin{proof}
+    Pecan confirms the following predicate is true in \pecaninline{2.40} seconds.
+    \[
+        \forall \alpha. \forall n > 0. \exists i. \texttt{palindrome}(a, i, n)
+    \]
+\end{proof}
+
+\begin{theorem}
+    Let $n$ be a natural number and $\alpha \in (0, 1)$ an irrational number.
+    Then $C_{\alpha}$ contains exactly one palindrome of length $n$ if $n$ is even, and exactly two palindromes of length $n$ if $n$ is odd.
+    \reed{This theorem also implies that $C_{\alpha}$ contains palindromes of every length, so the previous theorem is unnecessary}
+\end{theorem}
+\begin{proof}
+    We begin by defining a predicate defining the location of the first occurrence of each length $n$ palindrome in $C_{\alpha}$.
+    \[
+        \texttt{first\_palindrome}(a,i,n) :=
+            \texttt{palindrome}(a,i,n)
+            \land
+            \forall j > 0. C_{\alpha}[j..j+n] = C_{\alpha}[i..i+n] \implies i \leq j
+    \]
+    The resulting automaton has $247$ states and $1281$ edges.
+    The following predicate is states the theorem, and Pecan proves it in \pecaninline{428.85} seconds (about 7 minutes).
+    \begin{align*}
+        \forall \alpha, n. & \\
+            & (\texttt{even}(\alpha, n) \implies \exists i. \forall k. \texttt{first\_palindrome}(a,k,n) \iff i = k) \land \\
+            & (\texttt{odd}(\alpha, n) \implies \exists i,j. i \neq j \land \forall k. \texttt{first\_palindrome}(a,k,n) \iff (i = k \lor j = k))
+    \end{align*}
+    We define even and odd in the standard way: $\texttt{even}(\alpha, n) := \exists m. n = 2m$ and we define $\texttt{odd}(\alpha, n) := \lnot \texttt{even}(\alpha, n)$.
+\end{proof}
+
+\reed{Something to note, perhaps, is that the fastest way to generate these automata is not always the predicate that is the most obvious (e.g., above, that way is much more efficient than the naive way of starting out with a definition based on the length of the factor}
+
+\subsubsection{Antisquares and Antipalindromes}
+
+Similar to squares and palindromes are the concepts of antisquares and antipalindromes, which share many of the same properties.
+First, we define antisquares and antipalindromes.
+
+\begin{definition}
+    A word $w$ is an \term{antisquare} if it is of the form $w = x \overline{x}$ for some $x$.
+    The \term{order} of $w$ is $|x|$.
+\end{definition}
+
+\begin{definition}
+    A word $w$ is an \term{antipalindrome} if $w = \overline{w^R}$.
+\end{definition}
+
+Unlike squares and palindromes, of which all Sturmian words contain many distinct examples, there are both finitely many antisquares and antipalindromes in each Sturmian word.
+
+\begin{theorem}
+    All Sturmian words contain finitely many antisquares.
+\end{theorem}
+\begin{proof}
+Similar to squares, we construct an automaton recognizing the following property that there is an antisquare of order $n$ at $C_{\alpha}[i..i+2*n]$.
+\[
+    \texttt{antisquare}(\alpha, i, n) := n > 0 \land i > 0 \land \forall j. i \leq j < i + n \implies C_{\alpha}[j] \ne C_{\alpha}[j + n]
+\]
+
+Finally, Pecan proves the following in \pecaninline{0.17} seconds.
+\[
+    \forall \alpha. \exists m. \forall n, i. \texttt{antisquare}(\alpha, i, n) \implies n < m
+\]
+\end{proof}
+
+\begin{theorem}
+    All Sturmian words contain finitely many antipalindromes.
+\end{theorem}
+\begin{proof}
+    We construct the following definition of an antipalindrome, stating that $C_{\alpha}[i..j]$ is an antipalindrome:
+    \[
+        \texttt{anti\_palindrome}(\alpha, i, n) := 
+            \forall t. i \leq t < i + n \implies C_{\alpha}[t] = C_{\alpha}[j + i - t]
+    \]
+    The resulting automaton has $168$ states and $591$ edges which takes \pecaninline{359.52} seconds to build (roughly \pecaninline{6} minutes).
+    
+    Pecan confirms the following predicate is true, proving the theorem, which takes \pecaninline{0.12} seconds to run.
+    \[
+        \forall \alpha. \exists m. \forall i, n. \texttt{anti\_palindrome}(\alpha, i, n) \implies n \leq m
+    \]
+\end{proof}
+
+We can bound the possible lengths of antisquares and antipalindromes using the continued fraction's convergents.
+We define $A_O : (0,1) \to \N$ such that $A_O(\alpha)$ is the maximum order of any antisquare in $C_{\alpha}$; we also define $A_L : (0,1) \to \N$ such that $A_L(\alpha)$ is the maximum length of any antisquare in $C_{\alpha}$.
+Note that $A_L(\alpha) = 2A_O(\alpha)$.
+
+Similarly, define $A_P : (0, 1) \to \N$ such that $A_P(\alpha)$ is the maximum length of any antipalindrome in $C_{\alpha}$.
+
+\begin{theorem}
+    For every $\alpha = [a_0, a_1, a_2, \ldots] \in (0,1)$, the following are true:
+    \begin{enumerate}[label=(\roman*)]
+        \item $A_O(\alpha) \leq a_3 q_3 + a_1 q_1$
+        \item $A_P(\alpha) \leq a_3 q_3 + a_1 q_1$ 
+        \item $A_L(\alpha) \leq a_5 q_5 + a_3 q_3 + a_1 q_1$
+        \item $A_O(\alpha) \leq A_P(\alpha) \leq A_L(\alpha) = 2A_O(\alpha)$
+    \end{enumerate}
+    
+    That is, the longest antipalindrome in $C_{\alpha}$ is at least as long as the largest order of an antisquare in $C_{\alpha}$, but it is shorter than the longest antisquare.
+    Additionally, there are $\alpha, \beta \in (0, 1)$ for which the equality is achieved; that is, there is are $\alpha, \beta \in (0, 1)$ such that $A_O(\alpha) = A_P(\alpha)$ and $A_P(\beta) = A_L(\beta)$.
+    
+    \reed{this theorem makes the previous two about there being finitely many of each easy corollaries, so we could omit them if we choose/need space}
+\end{theorem}
+\begin{proof}
+    Using Pecan, we create automata which compute $A_O$, $A_P$, and $A_L$:
+    \begin{align*}
+        A_O(\alpha, n) &:= \texttt{has\_antisquare}(\alpha, n) \land \forall m. \texttt{has\_antisquare}(\alpha, m) \implies m \leq n \\
+        A_P(\alpha, n) &:= \texttt{has\_antipalindrome}(\alpha, n) \land \forall m. \texttt{has\_antipalindrome}(\alpha, m) \implies m \leq n \\
+        A_L(\alpha, n) &:= \texttt{has\_antisquare\_len}(\alpha, n) \land \forall m. \texttt{has\_antisquare\_len}(\alpha, m) \implies m \leq n
+    \end{align*}
+    % This is probably obvious
+    % where $\texttt{has\_antisquare}(a, n)$ holds when $C_{a}$ has an antisquare of order $n$, $\texttt{has\_palindrome}(a, n)$ holds when $C_{a}$ has an antipalindrome of length $n$, and $\texttt{has\_antisquare\_len}(a, n)$ holds when $C_{a}$ has an antisquare of length $n$.
+    We then verify some basic correctness properties:
+    \begin{itemize}
+        \item Each of these relations is a function, which justifies using Pecan's functional expression notation (e.g., $A_L(\alpha) = 2A_O(\alpha)$ instead of $A_L(\alpha, 2n) \land A_O(\alpha, n)$).
+        \item $A_L(\alpha) = 2A_O(\alpha)$
+        \item $A_O(\alpha) \geq 1$, $A_L(\alpha) \geq 2$, and $A_P(\alpha) \geq 2$; because every Sturmian word must contain $01$ which is both an antisquare and an antipalindrome.
+    \end{itemize}
+    
+    We use Praline to build automata recognizing Ostrowski-$\alpha$ representations of at most $4$ and $6$ nonzero digits, called $\texttt{is\_4\_digits}(n)$ and $\texttt{is\_6\_digits}(n)$.
+    The we use Pecan to prove all the parts of the theorem:
+    \begin{align*}
+        \forall \alpha. & \texttt{is\_4\_digits}(A_O(\alpha)) \land \texttt{is\_4\_digits}(A_P(\alpha)) \land \texttt{is\_6\_digits}(A_L(\alpha)) \land \\
+                        & A_O(\alpha) \leq A_P(\alpha) \leq A_L(\alpha)
+    \end{align*}
+    We also use Pecan to find examples of the equality: when $\alpha = [0,3,3,\overline{1}]$, we have $A_O(\alpha) = A_P(\alpha) = 2$, and when $\alpha = [0,4,2,\overline{1}]$, we have $A_P(\alpha) = A_L(\alpha) = 2$.
+    
+    The total time for the proof, including the correctness properties is \pecaninline{4.16} seconds.
+    
+    Finally, for parts (1)-(3) of the theorem, note that we have proven:
+    \begin{enumerate}
+        \item $|\mathcal{O}_{\alpha}(A_O(\alpha))| \leq 4$
+        \item $|\mathcal{O}_{\alpha}(A_P(\alpha))| \leq 4$ 
+        \item $|\mathcal{O}_{\alpha}(A_L(\alpha))| \leq 6$
+    \end{enumerate}
+    But this implies that $A_O(\alpha) \leq a_3 q_3 + a_1 q_1$, and similarly for the others, because the largest length-$4$ Ostrowski-$\alpha$ representation is the representation of $a_3 q_3 + a_1 q_1$.
+\end{proof}
+
+\subsubsection{Special Factors}
+
+\begin{definition}
+    A factor $x$ of a word $w$ is called \term{right special} (or just \term{special}) if $x0$ and $x1$ are both factors of $w$.
+\end{definition}
+
+\begin{theorem}
+    The unique special factor of length $n$ is $C_{\alpha}[1..n+1]^R$.
+\end{theorem}
+\begin{proof}   
+    We define \texttt{special} as:
+    \[
+        \texttt{special}(\alpha,i,n) := 
+            (\exists j. C_{\alpha}[i..i+n] = C_{\alpha}[j..j+n] \land C_{\alpha}[j] = 0) \land
+            (\exists k. C_{\alpha}[i..i+n] = C_{\alpha}[k..k+n] \land C_{\alpha}[k] = 1)
+    \]
+    Then we define \texttt{first\_special} as:
+    \[
+        \texttt{first\_special}(\alpha,i,n) := \texttt{special}(a,i,n) \land \forall j. C_{\alpha}[i..i+n] = C_{\alpha}[j..j+n] \implies i \leq j
+    \]
+
+    Pecan build this automaton in \pecaninline{91.99} seconds, has $112$ states and $447$ edges. 
+
+    Recall that $\texttt{reverse\_factor}(\alpha,i,j,\ell)$ holds when $C_{\alpha}[i..j] = C_{\alpha}[k+1..\ell+1]^R$ where $k$ is such that $\ell - k = j - i$.
+    Then we can state the theorem as:
+    \[
+        \forall \alpha, i > 0, n. \texttt{first\_special}(\alpha,i,n) \implies \texttt{reverse\_factor}(\alpha,i,i+n,n)
+    \]
+    
+    Pecan proves this in \pecaninline{0.50} seconds.
+\end{proof}
+
+\subsubsection{Recurrent Factors}
+
+\begin{definition}
+    A factor $x$ of a word $w$ is called \term{recurrent} if it occurs infinitely often in $w$.
+\end{definition}
+
+\begin{theorem}
+    For every $\alpha$, every factor of $C_{\alpha}$ is recurrent.
+\end{theorem}
+\begin{proof}
+    We can easily define when a factor is recurrent.
+    \reed{Finish this}
+\end{proof}
+
+\subsubsection{Periods}
+
+\begin{theorem}\label{thm:lesat-period-semiconvergent}
+    If $p$ is the least period of a factor of $C_{\alpha}$, then $p$ is the denominator of a semiconvergent of $\alpha$; i.e., $p = q_{n,\ell}$ for some $n$ and $\ell$.
+\end{theorem}
+\begin{proof}
+\reed{least period takes 5016.77 seconds to build given the period automaton.}
+\end{proof}
+
+\subsubsection{Unbordered Factors}
+
+\begin{definition}
+    A word $w$ is called \term{unbordered} if the least period of $w$ is $|w|$.
+\end{definition}
+
+\reed{Still need to do the thing with the unbordered factors reversed/how many of them there are}
+
+\reed{Maybe there's some relation between palindromes and unbordered factors because there's exactly two or each for each odd $n$ (or even i don't remember right now). Well, maybe not; palindromes are like, super bordered factors; unbordered factors are more like antipalindromes but somewhat less extreme. }
+
+We recover Lemma 8 of~\cite{Currie2009LeastPO}.
+\begin{theorem}
+    The least period of $C_{\alpha}[i..j]$ is the length of the longest unbordered factor of $C_{\alpha}[i..j]$.
+\end{theorem}
+\begin{proof}
+We have previously defined least periods, so we can easily define unbordered factors; similarly, it is straight to define unbordered subfactors:
+\begin{align*}
+    \texttt{unbordered}(\alpha,i,j) &:= \texttt{least\_period}(\alpha,j - i, i, j) \\
+    \texttt{unbordered\_factor}(\alpha,i,j,k,\ell) &:= i \leq j \land \ell \leq j \land \texttt{unbordered}(\alpha,k,\ell) 
+\end{align*}
+
+Then the theorem we wish to prove is
+\[
+    \forall \alpha. \forall i > 0, j > 0, p > 0.
+        \texttt{least\_period}(\alpha,p,i,j) \iff p = \max \{ m : \exists k. \texttt{unbordered\_factor}(\alpha,i,j,k,k+m)\}
+\]
+
+Pecan confirms the theorem is true.
+\end{proof}
+
+Note that from this theorem and Theorem~\ref{thm:least-period-semiconvergent}, it follows that the lengths of unbordered factors are also denominators of the semiconvergents of $\alpha$.
+
+\reed{TODO: Add the new theorem we proved from https://arxiv.org/abs/2005.11718}
+
+\subsection{Discussion}

@@ -1,0 +1,43 @@
+\section{Optimization}\label{sec:optimizations}
+
+\subsubsection{Boolean Optimizations}
+
+The following boolean optimizations are performed:
+
+\begin{itemize}
+    \item $\lnot \lnot P$ becomes $P$
+    \item $\lnot (P \land Q)$ becomes $\lnot P \lor \lnot Q$
+    \item $\lnot (P \lor Q)$ becomes $\lnot P \land \lnot Q$
+    \item $\lnot (x < y)$ becomes $y < x \lor x = y$
+    \item $\top \land Q$ becomes $Q$
+    \item $\bot \land Q$ becomes $\bot$
+    \item $\top \lor Q$ becomes $\top$
+    \item $\bot \lor Q$ becomes $Q$
+    \item $x = x$ becomes $\top$
+\end{itemize}
+
+\subsection{Arithmetic Optimizations}
+
+Note that these optimizations are \textbf{not} sound if you've defined arithmetic predicates that don't behave reasonably.
+
+\begin{itemize}
+    \item $0 + x$, $x + 0$, and $x - 0$ become $x$
+    \item $a + b = c$ becomes $\texttt{adder}(a, b, c)$
+\end{itemize}
+
+\subsection{Unused Variables}
+
+\begin{itemize}
+    \item $\exists x. P$ becomes $P$ if $x \not\in fv(P)$
+\end{itemize}
+
+where $fv(P)$ denotes the free variables of $P$.
+
+\subsection{Redundant Variables}
+
+\begin{itemize}
+    \item $x = y \land P(x, y)$ becomes $y = y \land P(y, y)$
+\end{itemize}
+
+if $y$ has a larger scope than $x$ and there are no complements between the binders of $x$ and $y$ and 
+the current formula.

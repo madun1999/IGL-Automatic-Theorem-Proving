@@ -1,0 +1,26 @@
+\section{Introduction}
+
+\textbf{Pecan} is a system for \emph{automated theorem proving} originally designed to decide statements about families of infinite words, in particular about Sturmian words, and based on well-known decision procedures for B\"uchi automata due to B\"uchi \cite{Buechi}. Pecan is inspired by Walnut~\cite{walnut} by Mousavi, another automated theorem prover for deciding combinatorical properties of automatic words. The main movitation to create this new tool is to decide whether a statement is true for every element of an infinite family of words rather than just determining the truth of the statement for a single given words. Since the infinite families of words we want to consider are often indexed by real numbers, it is convenient to work with B\"uchi automata instead of finite automata. The canonical example of such a family of words are the Sturmian words, that is the family $(\mathbf{w}_{\alpha,\rho})$ of all words $w=(w_n)$ over the alphabet $\{0,1\}$ such that there is $\rho \in [ 0,1 )$  and some irrational $\alpha \in (0,1)$ with
+\[
+w_{n}=\lfloor n\alpha +\rho\rfloor -\lfloor (n-1)\alpha +\rho\rfloor
+\]
+for all $n\in \N$. 
+
+The idea of using automata-based decision procedures to prove theorems in combinatorics on words has been championed by Jeffrey Shallit and successfully implemented in several papers of Shallit and his many co-authors (see \cite{Shallit-survey} for a survey). The development of Pecan is our contribution to this exciting research program.
+
+%An \term{automated theorem prover} is a program that takes as input a statement and \textbf{decides} (i.e., proves or disproves) it.
+%Theorem provers can be very useful: computers are reliable, and they never get tired or bored, allowing us to quickly explore new ideas.
+%Though it is impossible to decide \emph{all} statements, we can still use theorem provers to solve many interesting problems. 
+
+
+Pecan comes with \textbf{Praline}\footnote{Because it is syntactic \textbf{sugar} for Pecan.}, a scripting language designed to make working with Pecan more pleasant.
+It provides the primary interface to the counterexample generation capabilities of Pecan, and also allows some degree of metaprogramming: for example, programmatically generating predicate definitions.
+
+The aim of the manual is to introduce Pecan and Praline, give examples of their usage, and to describe the new contributions made by Pecan. Section \ref{sec:background} informally describes the mathematical background necessary to understand how Pecan works.
+This section is not strictly necessary to use Pecan, so you may wish to skip directly to Usage (Section \ref{sec:usage}) which contains several examples, for a quicker start.
+Section \ref{sec:usage} gives a short tutorial and several examples of Pecan programs.
+Section \ref{sec:features} provides a reference how all of the various features of Pecan work.
+Section \ref{sec:implementation} describes at a high level how Pecan is implemented, the compilation process, and the various optimizations the system performs.
+Section \ref{sec:aut-format} describes the Pecan Automata Format.
+Section \ref{sec:praline} describes the Praline scripting language.
+Section \ref{sec:sturmian-words} describes one of the major applications of Pecan, automatically proving many theorems about Sturmian words.

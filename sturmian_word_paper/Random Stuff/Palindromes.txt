@@ -1,0 +1,20 @@
+//checks if C(i,n) is the reverse of C(j,n). (a,i,j,n)
+
+// is gt0_2(a,j) just j > 0?
+// Yes, and it also recognizes j -- Eric
+def mirrorSijLn_2 "?lsd_base_2 $gt0_2(a,i) & $gt0_2(a,j) & $gt0_2(a,n) & At $recog_2(a,t) & $lt_2(t,n) => 
+(Eit $add_2(a,i,t,it) & Ejn $add_2(a,j,n,jn) & Ejn_t $sub_2(a,jn,t,jn_t) & Eone $one_2(a,one) & Ejn_t1 $sub_2(a,jn_t,one,jn_t1) & $C_2(a,it) <=> $C_2(a,jn_t1))":
+
+
+//checks if C(i,n) is a palindrome. (a,i,n)
+def palindromeSiLn_2 "?lsd_base_2 Ej $same(i,j) & $mirrorSijLn_2(a,i,j,n)":
+
+
+
+//gives the n that C has excactly one palindrome of length n.
+eval theorem12_2 "?lsd_base_2 Ei $gt0_2(a,i) & ($palindromeSiLn_2(a,i,n) & (Aj $gt0_2(a,j) & $palindromeSiLn_2(a,j,n) => $sameSijLn_2(a,i,j,n)))":
+
+
+
+// Checks if C is mirror invariant \[\forall i \exists j \forall t<n \implies C[i+t] = C[j+n-1-t]\]
+eval mirrorinvariant_2 "?lsd_base2 An $recog_2(a,n) => Ai $gt0_2(a,i) => Ej $gt0_2(a,j) & $mirrorSijLn_2(a,i,j,n)":

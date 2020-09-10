@@ -1,0 +1,14 @@
+// range of the values from l(n)
+eval range_t20_rt2 "?msd_rt2 En $theorem20(n,p)":
+
+// whether l(n) is increasing
+eval is_increasing_rt2 "?msd_rt2 An Ep1,p2 $theorem20(n,p1) & $theorem20(n+1,p2) => p1 <= p2":
+
+// The value of n at which point l(n) increases
+eval increase_rt2 "?msd_rt2 Ap1,p2 $theorem20(n,p1) & $theorem20(n+1,p2) => p1 < p2":
+
+one of these, not sure if should be n + 1 or n in numerator
+This comes from ratio of pell-lucas (minus 2) and pell numbers
+
+limit of ((1 + sqrt(2))^2 + (1 - sqrt(2))^n - 2) / ((((1+sqrt(2))^n - (1 - sqrt(2))^n))/(2*sqrt(2))) as n goes to infinity
+limit of ((1 + sqrt(2))^(n+1) + (1 - sqrt(2))^(n+1) - 2) / ((((1+sqrt(2))^n - (1 - sqrt(2))^n))/(2*sqrt(2))) as n goes to infinity

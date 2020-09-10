@@ -1,0 +1,327 @@
+\section{Properties of Bounded Sturmian Words}\label{sec:conjectures}
+
+In this section we make use of our automata for $k$-bounded Sturmian words, along with Walnut, to state several conjectures about both bounded and unbounded Sturmian words and prove some special cases of these conjectures.
+Because proving a theorem about $k$-bounded Sturmian words proves it for infinitely many Sturmian words, it provides strong evidence that the conjecture is in fact true for all Sturmian words, or at least all bounded Sturmian words (i.e., those defined by $\alpha \in \alpha_{\leq k}$ for some $k$).
+Recall that, as previously noted, proving a conjecture about all $\alpha \in \alpha_{\leq k}$ for some $k$ implies that it also holds for all $\alpha_{\leq \ell}$ for $\ell \leq k$.
+
+\subsection{Aperiodicity}
+
+\begin{theorem}
+For all $k \ge 1$, $k$-bounded Sturmian words are not ultimately periodic.
+\end{theorem}
+
+Similar to Theorem \ref{thm:ulti_period_C} in the previous chapter, we construct the predicate that is true when infinite string $C$ is ultimately periodic with period $p$:
+
+\begin{equation*}\label{eqn:aperiodic-bounded}
+    (p\ge_{\alpha} 1) \wedge \exists n~ \forall i \ge_{\alpha} n ~ C_{\alpha}[i] = C_{\alpha}[i+p]
+\end{equation*}
+
+We are able to check for the case up for $k=5$.
+
+\subsection{Squares in bounded Sturmian words}
+
+A factor $z$ is called a \term{square} if can be written as $z = xx$ for some word $x$.
+The \term{order} of a square is the length of the repeated part, $|x|$.
+
+\citeauthor{fibword} showed that the orders of the squares in $C_{\phi}$ are exactly the Fibonacci numbers~\cite{fibword}.
+We find that in $C_{\sqrt{2}}$ the orders of squares are of the form $(11+2+1)0^*$, and using our automata for $k$-bounded Sturmian words with $k=2$, we find this is true for all $2$-bounded Sturmian words.
+We conjecture that a similar pattern holds for all $k$-bounded Sturmian words, namely:
+
+\begin{conjecture}\label{conj:square}
+    When $k > 2$, the orders of the squares in $k$-bounded Sturmian words are of the form $E_k = (1+2+\cdots+(k-1))(1+\epsilon)0^*$.
+    That is, they are either a single digit, from $1$ to $k-1$ followed by arbitrarily many zeroes; or a single digit from $1$ to $k-1$, followed by a $1$, followed by arbitrarily many zeroes.
+\end{conjecture}
+\reed{This paper (in the box folder) seems to have a very similar result ``Powers in Sturmian sequences"}
+
+Using our automata, we are able to prove this theorem for $k$ up to $5$.
+
+\begin{theorem}\label{thm:square-conj-prf}
+Conjecture~\ref{conj:square} holds for $k \in \{1,2,3,4,5\}$.
+\end{theorem}
+\begin{proof}
+We may encode the property that there is a square of order $n > 0$ in $C_{\alpha}$ as follows:
+
+\begin{equation*}\label{def:square}
+\exists i > 0, C_{\alpha}(i,n) = C_{\alpha}(i+t,n)
+\end{equation*}
+
+Then using Walnut, we can create an automata that matches the regular expression above for any particular $k$, and call this regular expression $E_k$, and the corresponding language $L(E_k)$.
+Finally, we use Walnut to check the formula:
+
+\begin{equation*}\label{def:square-conj}
+\forall \alpha \in \alpha_{<k} \forall n, \text{if $n$ is the order of a square in $C_k$, then $n \in L(E_k)$}.
+\end{equation*}
+
+Walnut verifies that the conjecture holds for $k=5$ (with the modification to the $k=2$ case mentioned earlier).
+% However, it is unable to check $k=6$ or any higher $k$, because the computer ran out of memory.
+\end{proof}
+
+\subsection{Antisquares in bounded Sturmian words}
+
+A factor $z$ is called an antisquare when it is of the form $z = x\overline{x}$ for some word $x$.
+
+We conjecture the following:
+
+\begin{conjecture}\label{conj:antisq}
+    For every characteristic Sturmian word with slope $\alpha$, there are finitely many antisquare factors in $C_{\alpha}$.
+    Furthermore, every antisquare is either a palindrome or an antipalindrome.
+\end{conjecture}
+
+\begin{theorem}\label{thm:antisq}
+Conjecture~\ref{conj:antisq} holds for all $\alpha \in \alpha_{\leq k}$ when $k \in \{1,2,3,4,5\}$.
+\end{theorem}
+\begin{proof}
+We encode the property that a \factor of $C_k$, defined by its location $i$ and length $n$, is an antisquare as follows:
+
+\begin{equation*}\label{def:antisq}
+\forall k < n, C_{\alpha}[i +_{\alpha} k] \neq C_{\alpha}[i +_{\alpha} k +_{\alpha} n]
+\end{equation*}
+
+We may encode the statement ``there are finitely many antisquare factors in $C_{\alpha}$'' as follows:
+
+\begin{equation*}\label{def:antisq-conj}
+\forall \alpha \in \alpha_{<k}, \exists m \in N_{\alpha}, \forall i, n \in N_{\alpha}, \text{if $C_{\alpha}(i,n)$ is an antisquare, then $n < m$}.
+\end{equation*}
+
+That is, there is some bound on the lengths of the antisquares for every $\alpha$.
+
+Finally, we encode the statement that a factor $C_{\alpha}(i,n)$ is a palindrome as shown below.
+The encoding of ``$C_{\alpha}(i,n)$ is an antipalindrome'' is the same, except with $C_{\alpha}[i+j] \neq C_{\alpha}[i+n-j-1]$.
+
+\begin{equation*}\label{def:palindrome}
+    \forall j < n, C_{\alpha}[i + j] = C_{\alpha}[i + n - j - 1]
+\end{equation*}
+
+We then use Walnut to check whether every antisquare in $k$-bounded Sturmian words are palindromes or antipalindromes, finishing the proof for all $k$ up to $5$.
+\end{proof}
+
+For example, in the $k = 2$ case, we can enumerate all of the antisquares in $\Ctwo$ and $\Cthree$, so there are finitely many.
+Additionally, by inspection we can see that they are all either antipalindromes (e.g., 101010) or palindromes (e.g., 0110).
+These can easily be checked by Walnut.
+
+\begin{example}
+The antisquares in $\Ctwo$ are 01, 10, 1001, 101010, 010101, and 10100101.\\
+The antisquares in $\Cthree$ are 01, 10, and 0110.
+\end{example}
+
+\subsection{Approximate antisquares}
+\reed{Is there some already existing name for these?}
+\reed{Merge this with the previous section?}
+
+Let $C_{\alpha}$ be a Sturmian word, and $x$ a \factor in $C_{\alpha}$ such that $x=uv$ where $|u| = |v|$.
+Consider the Hamming distance, $H(u,v)$, which is the number of places in which $u$ and $v$ differ.
+Define $S(u,v)$ to be the number of places for which $u$ and $v$ are the same when $|u| = |v|$.
+Note that $S(u,v) + H(u,v) = |u|$, if $S(u,v) = |u|$, then $uv$ is a square, and if $S(u,v) = 0$, then $uv$ is an antisquare.
+
+We call a \word $x$ an \term{$\ell$-approximate antisquare} if $x = uv$ such that $|u| = |v|$ and $S(u,v) \leq \ell$, that is, where $u$ and $v$ have at most $\ell$ characters in the same place.
+Note $0$-approximate antisquares are precisely the antisquares in the usual sense.
+We conjecture the following:
+
+\begin{conjecture}\label{conj:approx-antisq}
+    The set of $\ell$-approximate antisquares in $C_{\alpha}$ is finite for every $\ell$ and $\alpha$.
+\end{conjecture}
+
+\begin{theorem}\label{thm:approx-antisq}
+Conjecture~\ref{conj:approx-antisq} holds when $k = 2$ and $\ell = 1$, and when $k \leq 5$ and $\ell = 0$.
+\end{theorem}
+\begin{proof}
+For any $\ell$, we can define the predicate that a \factor $C_{\alpha}(i,n)$ is a $\ell$-approximate square if the following formula holds:
+
+\begin{equation*}
+    \forall k_1 \leq k_2 \leq \cdots \leq k_{\ell} < n, \forall t < n, C_{\alpha}[i + t] = C_{\alpha}[i + n + t] ~ \text{or} ~ t \in \{ k_1, k_2, \ldots, k_{\ell} \}
+\end{equation*}
+
+Using Walnut, we prove that Conjecture~\ref{conj:approx-antisq} holds for $k=2$ and $\ell = 0, 1$.
+Additionally, it follows from Theorem~\ref{thm:antisq} that the conjecture also holds for $k=3,4,5$ and $\ell = 0$.
+\end{proof}
+
+\subsection{Higher-Order Powers}
+\eric{define powers}
+
+\begin{conjecture}
+    For all $k\ge 1$, $k$-bounded Sturmian words does not contain a $(k+3)^{th}$ power. 
+    \eric{Can only check $k=1,2$}
+    \eric{Can be stronger.}
+\end{conjecture}
+
+\begin{conjecture}
+    Let $\alpha$ be a quadratic irrational number, if the maximum of the repeated part of the continued fraction of $\alpha$ is $k$, then the Sturmian word with slope $\alpha$ contains a $(k+2)^{th}$ power.
+    \eric{Can only check $k=1,2$}
+    \eric{Can be stronger.}
+\end{conjecture}
+
+\eric{It's not a proof, change $k$ here to something else}
+The following predicate is true when string $C$ contains a $k^{th}$ power of period $n$:
+\[(n > 0) \wedge \exists i ~ \forall t < kn ~ C[i+t]=C[i+n+t]\]
+
+By replacing $k$ with 4 and 5 and replacing $C$ with $\Ctwo$ and $\Cthree$, we get empty automaton for $k=5$ but non-empty automaton for $k=4$. The non-empty automaton are shown below.
+\eric{insert automaton for $k=5$}
+
+
+
+\begin{example}
+The Fibonacci word contains third powers but not fourth powers.\eric{Cite fib paper.} $\Ctwo$ and $\Cthree$ contains fourth powers, but contains no fifth powers.
+\end{example}
+
+\begin{example}
+The cubes in $\Ctwo$ are of order ...
+The cubes in $\Cthree$ are of order ...
+The fourth power in $\Ctwo$ are of order ...
+The fourth power in $\Cthree$ are of order ...
+\eric{Do we need this?}
+\reed{My feeling is probably not}
+\end{example}
+
+\subsection{Unbordered factors in Sturmian words}\label{sec:unbordered}
+
+A \word $w$ is said to be \term{bordered} if there is some \word $u$ and some nonempty \word $x$ such that $w = xux$.
+A \word $w$ is unbordered if there is are no such \word{}s $u$ and $x$.
+
+\reed{fib word paper} found that all unbordered \factor{}s of the Fibonacci word have length $F_n$ for some Fibonacci number $F_n$ with $n \geq 2$.
+Furthermore, there are exactly two \factor{}s for each length $F_n$, and one is the reverse of the other.
+
+Checking this property using the same predicates for $C_{\sqrt{2}}$ and $C_{\sqrt{3}}$, we find that the lengths of the unbordered \factor{}s are of the form $110^* + 10^*$ and $(11 + 01 + 10)(00)^*0+2+1$, respectively.
+Generalizing this result, we conjecture the following:
+\reed{are there results like this that are known? the fib word paper says nothing one way or the other, so we may be able to claim this result as new}
+
+\begin{conjecture}\label{conj:unbordered}
+    If $x$ is an unbordered \factor in some $k$-bounded Sturmian word $w$, then $|x|$ is of the form $N0^*$ where $N$ is some \word in $\{1,\ldots,k\}^+$.
+\end{conjecture}
+
+\begin{theorem}\label{thm:unbordered}
+Conjecture~\ref{conj:unbordered} holds for $k = 5$.
+\end{theorem}
+\begin{proof}
+We formulate the definition of an unbordered factor as follows, making the process of checking the conjecture more efficient.
+
+First, we say a triple $(i,j,n)_{\alpha}$ is a \term{repeated \factor} in the Sturmian word $C_{\alpha}$ if $C_{\alpha}(i,n) = C_{\alpha}(j,n)$.
+Then a word $C_{\alpha}(i,j)$ is bordered if there is some $k$ such that $(i,j-k,j)_{\alpha}$ is a repeated \factor of $C_{\alpha}$.
+Finally, $n_{\alpha}$ is the length of an unbordered \factor of $C_{\alpha}$ if there is some $i > 0$ such that $C_{\alpha}(i, i+n)$ is not bordered.
+
+Using this formulation, we are able to prove our conjecture for all $k$-bounded Sturmian words for $k=5$.
+Note that this result implies that the conjecture also holds for all $1 \leq \ell < k$.
+\end{proof}
+
+Below is the log from the $k=3$ case:
+
+\begin{lstlisting}[basicstyle=\scriptsize\ttfamily]
+0<k has 2 states: 53ms
+ 0<i has 2 states: 2ms
+  (0<k&0<i) has 4 states: 16ms
+   i<j has 2 states: 1ms
+    ((0<k&0<i)&i<j) has 8 states: 7ms
+     (((0<k&0<i)&i<j)&recog_3(a,i)) has 13 states: 23ms
+      ((((0<k&0<i)&i<j)&recog_3(a,i))&recog_3(a,j)) has 19 states: 29ms
+       (((((0<k&0<i)&i<j)&recog_3(a,i))&recog_3(a,j))&recog_3(a,k)) has 28 states: 35ms
+        t<k has 2 states: 0ms
+         (recog_3(a,t)&t<k) has 4 states: 2ms
+          C_3[ti]=C_3[tj] has 6 states: 2ms
+           (add_3(a,j,t,tj)&C_3[ti]=C_3[tj]) has 87 states: 169ms
+            (E tj (add_3(a,j,t,tj)&C_3[ti]=C_3[tj])) has 87 states: 268ms
+             (add_3(a,i,t,ti)&(E tj (add_3(a,j,t,tj)&C_3[ti]=C_3[tj]))) has 361 states: 924ms
+              (E ti (add_3(a,i,t,ti)&(E tj (add_3(a,j,t,tj)&C_3[ti]=C_3[tj])))) has 350 states: 490ms
+               ((recog_3(a,t)&t<k)=>(E ti (add_3(a,i,t,ti)&(E tj (add_3(a,j,t,tj)&C_3[ti]=C_3[tj]))))) has 748 states: 8701ms
+                (A t ((recog_3(a,t)&t<k)=>(E ti (add_3(a,i,t,ti)&(E tj (add_3(a,j,t,tj)&C_3[ti]=C_3[tj])))))) has 48 states: 1404620ms
+                 ((((((0<k&0<i)&i<j)&recog_3(a,i))&recog_3(a,j))&recog_3(a,k))&(A t ((recog_3(a,t)&t<k)=>(E ti (add_3(a,i,t,ti)&(E tj (add_3(a,j,t,tj)&C_3[ti]=C_3[tj]))))))) has 45 states: 83ms
+total computation time: 1415461ms
+0<k has 2 states: 1ms
+ (0<k&recog_3(a,k)) has 4 states: 0ms
+  (sub_3(a,j,k,j2)&repetition_3(a,i,j2,k)) has 52 states: 68ms
+   (E j2 (sub_3(a,j,k,j2)&repetition_3(a,i,j2,k))) has 66 states: 1224ms
+    ((0<k&recog_3(a,k))&(E j2 (sub_3(a,j,k,j2)&repetition_3(a,i,j2,k)))) has 66 states: 16ms
+     (E k ((0<k&recog_3(a,k))&(E j2 (sub_3(a,j,k,j2)&repetition_3(a,i,j2,k))))) has 28 states: 32ms
+total computation time: 1344ms
+i>0 has 2 states: 2ms
+ (i>0&recog_3(a,i)) has 4 states: 0ms
+  (recog_3(a,j)&add_3(a,i,n,j)) has 23 states: 7ms
+   ~bordered_3(a,i,j) has 29 states: 15ms
+    ((recog_3(a,j)&add_3(a,i,n,j))&~bordered_3(a,i,j)) has 24 states: 35ms
+     (E j ((recog_3(a,j)&add_3(a,i,n,j))&~bordered_3(a,i,j))) has 18 states: 2ms
+      ((i>0&recog_3(a,i))&(E j ((recog_3(a,j)&add_3(a,i,n,j))&~bordered_3(a,i,j)))) has 16 states: 1ms
+       (E i ((i>0&recog_3(a,i))&(E j ((recog_3(a,j)&add_3(a,i,n,j))&~bordered_3(a,i,j))))) has 8 states: 1ms
+total computation time: 68ms
+(recog_3(a,n)&unbordered_3(a,n)) has 8 states: 0ms
+ ((recog_3(a,n)&unbordered_3(a,n))=>unbordered_form_3(n)) has 1 states: 1ms
+  (A a , n ((recog_3(a,n)&unbordered_3(a,n))=>unbordered_form_3(n))) has 1 states: 1ms
+total computation time: 3ms
+\end{lstlisting}
+
+% Old unbordered factors section, can probably deleted
+
+% \reed{Note: fib has unbordered factors of lengths $10^*$ (i.e., the fibonacci numbers)}
+
+% \begin{theorem}
+% $C_{\sqrt{2}}$ has unbordered factors of lengths $110^* + 10^*$.
+% \end{theorem}
+% \begin{proof}
+% We can express the property of having an unbordered factor of length $n$ as follows:
+
+% \begin{equation*}
+%     \exists i > 0, \forall j, 1 \leq j \leq n/2, \forall t < j, C_{\sqrt{2}}[i + t] = C_{\sqrt{2}}[i + n - j + t]
+% \end{equation*}
+
+% Walnut produces the ``true'' automaton, completing the proof of the theorem.
+% \end{proof}
+
+% \begin{theorem}
+% % $C_{\sqrt{3}}$ has unbordered factors of lengths $(((1+0)1+10)(00)^*0+2+1)$
+% $C_{\sqrt{3}}$ has unbordered factors of lengths $(11 + 01 + 10)(00)^*0+2+1$
+% \end{theorem}
+
+% The \reed{fib word paper} found that the lengths of the unbordered factors of the Fibonacci word are exactly the Fibonacci numbers.
+% While our results for $C_{\sqrt{2}}$ and $C_{\sqrt{3}}$ are not as simple, they point to a similar pattern: all the lengths are of the form $N0^*$ where $N \in \{1,2,\ldots\}^*$ is a non-empty word consisting of non-zero symbols.
+
+\subsection{Grouped factors}
+
+We say an infinite \word $w$ contains \term{grouped factors} if, for all lengths $n > 0$, there exists a \factor $z$ that contains all the  length $n$ \factor{}s of $w$.
+Furthermore, each length-$n$ \factor of $w$ occurs exactly once in $z$.
+We call this \factor $z$ the \term{grouped factor for length $n$}.
+\reed{Definition cited in fib word paper as being given by Cassaigne, use that citation}
+The following predicate is true if and only if $C$ contains grouped factors.
+The first part states the existence of each length-$n$ \factor in $w = C[m \ldots s]$, and the second states the uniqueness.
+
+\begin{conjecture}\label{conj:grouped}
+    Every Sturmian word contains grouped factors.
+\end{conjecture}
+
+Recall we write that $C_{\alpha}(i,n) = C_{\alpha}(j,n)$ when $C_{\alpha}[i \ldots i + n - 1] = C_{\alpha}[j \ldots j + n - 1]$.
+
+We define a \term{unique \factor} of a \word $w$ to be a \word $z$ such that $z$ is a \factor of $w$ that appears exactly once in $w$.
+We can capture the property that $C_{\alpha}(i,n)$ is a unique \factor of $C_{\alpha}(m, s - m)$ as follows:
+
+\begin{equation*}
+\begin{split}
+\text{Uniq}_{\alpha}(i,m,n,s) :=& \exists j, m \leq j \leq s ~ \text{s.t.} ~ C_{\alpha}(i,n) = C_{\alpha}(j,n) ~ \wedge \\
+                                & \left(\forall g, m \leq g \leq s ~ \text{and} ~ C_{\alpha}(i,n) = C_{\alpha}(g,n) \implies g = j \right)
+\end{split}
+\end{equation*}
+
+The first line expresses that such a factor exists, and the second expresses that it occurs exactly once.
+
+Then the Sturmian word $C_{\alpha}$ contains the grouped factor for length $n$ when the following predicate is true.
+
+\begin{equation*}
+    G_{\alpha}(n) := \exists m, s ~ \text{s.t} ~ m > 0 ~ \text{and} ~ s > m ~ \text{and} ~ \forall i > 0, \text{Uniq}_{\alpha}(i,m,n,s)
+\end{equation*}
+
+Here $C_{\alpha}(m,s - m)$ is the grouped factor for length $n$.
+Then stating that $C_{\alpha}$ contains grouped factors is equivalent to stating that it contains the grouped factor for length $n$ for all $n > 0$, which encode encode as follows:
+
+\begin{equation*}
+    \forall n > 0, G_{\alpha}(n)
+\end{equation*}
+
+\begin{equation*}
+    \forall n, \exists b, n > 0 ~ \text{and} ~ b > n \implies \text{and} ~ G_{\alpha}(n)
+\end{equation*}
+
+Note that the variable $b$ is necessary as an artifact of our encoding of $\alpha$ by it's continued fraction.
+Recall that the statement is that for every $n$, there are some indices $m$ and $s$ such that $C_{\alpha}(m, s-m)$ contains every \factor of $C_{\alpha}$ of length $n$.
+For every predicate we write, we must check that $n$ is a valid Ostrowski-$\alpha$ representation.
+While we generally exclude this check from this paper for brevity, this check must always be included and it must take place using a finite amount of $\alpha$ so that it can be processed by an automaton.
+Therefore, $n$ is necessarily limited by the length of the prefix of $\alpha$ that it is given: if we use $10$ digits of $\alpha$, then $n$ is at most the largest $10$-digit Ostrowski-$\alpha$ number. 
+Then the indices we are searching for, $m$ and $s$, are also implicitly bounded by this same bound.
+So, by not including the bound $b$, if Walnut says the predicate is false, then this merely means there is no $m$ and $s$ that occur within this bound, though they may occur later in the word.
+To avoid this issue, we use the bound $b$ and state that $b > n$ to allow Walnut to properly search the entire word for the grouped factor for length $n$.
+
+Using the above predicates, we prove Conjecture~\ref{conj:grouped} in the case of $k$-bounded Sturmian words for $k = 3$.

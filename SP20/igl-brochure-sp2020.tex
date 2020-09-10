@@ -1,0 +1,95 @@
+\documentclass[18pts]{article}
+\usepackage{amssymb,amsmath,latexsym,enumerate,graphicx,fullpage,url,multicol,longtable,color}
+\usepackage{graphicx, tikz}
+\usetikzlibrary{calc,shadows}
+\usepackage[T1]{fontenc}
+\usepackage{eso-pic,fancybox}
+\usepackage[absolute,overlay]{textpos}
+\usepackage{color}
+\usepackage{mathptmx}
+\usepackage{fix-cm}
+
+%    \topmargin 0 in
+%    \textheight 11in
+%    \textwidth 6.25 in
+%    \oddsidemargin 1in   % read Lamport p.163
+%    \evensidemargin 1 in
+%    \headsep = 20pt
+\usepackage{anyfontsize}
+\usepackage{xparse}
+
+% suppresses hyphenation and aligns left
+\usepackage[none]{hyphenat}
+\raggedright
+
+
+\newcommand\ProjectName[1]{
+{
+\fontsize{35}{40}\selectfont
+\noindent\textbf{#1}\par
+}
+\vskip 2mm
+\fontsize{20}{25}\selectfont
+}
+
+\newenvironment{justified}
+{
+\tolerance=1
+\emergencystretch=\maxdimen
+\hyphenpenalty=10000
+\hbadness=10000
+}
+
+
+\renewcommand\large{
+\noindent\fontsize{16}{19}\selectfont}
+\renewcommand\Large{
+\noindent\fontsize{18}{20}\selectfont}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%					DO NOT CHANGE ANY ABOVE FORMAT/MACRO
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\ProjectName{Automatic Theorem Proving}
+\noindent\textbf{Faculty Mentor: {Professor Philipp Hieronymi}
+}
+\vskip 2mm
+\noindent\textbf{Team Leader: {Christian Schulz}
+}
+\vskip 2mm
+\noindent\textbf{Scholars: Reed Oei, Eric Ma}
+\\
+\Large
+
+\begin{justified}
+An \emph{automated theorem prover} is a program that takes as input a statement and proves (or disproves) it.
+Theorem provers can be very useful: computers are reliable and fast, allowing us to explore new ideas easily .
+Though it is impossible to prove \textbf{all} statements automatically, theorem provers can still solve many interesting problems.
+
+Over the past two semesters, we developed the Pecan theorem prover (Figure \ref{fig:pecan}), which can automatically prove statements expressed via B\"uchi automata, a model of computation that can handle infinitely long inputs.
+We have used Pecan to expand on prior work on automatically proving properties of \emph{Sturmian words} (Figure \ref{fig:slope}).
+Pecan can prove theorems about \textbf{all} Sturmian words, an improvement over previous techniques that could only prove properties of restricted sets of Sturmian words.
+
+{\fontsize{15}{12} \selectfont Try out Pecan at \url{http://reedoei.com/pecan}.}
+\end{justified}
+
+\begin{figure}[h]
+\begin{minipage}{.5\textwidth}
+\includegraphics[width=\textwidth]{images/pecan-demo-sp2020.png}%
+\caption{A Pecan program, which proves a property of Sturmian words, and the program's output.}
+\label{fig:pecan}
+\end{minipage}
+\hfill
+\begin{minipage}{.45\textwidth}
+\includegraphics[width=\textwidth]{images/Fibonacci_word_cutting_sequence.png}%
+\vspace{-2mm}
+\caption{The Sturmian word with slope $1/\phi$, which starts with $0100101001\ldots$}
+\label{fig:slope}
+\end{minipage}
+\end{figure}
+
+\end{document}

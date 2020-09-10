@@ -1,0 +1,420 @@
+\section{Implementation}\label{sec:implementation}
+
+This section describes at a high-level the implementation of Pecan.
+First, we describe the syntax in Section~\ref{sec:ir-syntax}.
+Then, we give a formal definition of the Pecan language, starting with the typing rules and associated definitions in Section~\ref{sec:typing}, and then the rules for evaluation in Section~\ref{sec:evaluation}.
+Next, we describe each step of the AST to IR conversion in Section~\ref{sec:ast-to-ir}, and finally the various optimizations performed by Pecan prior to execution in Section~\ref{sec:optimizations}.
+
+The process of executing a program is roughly as follows:
+
+\begin{enumerate}
+    \item Parse the program into an AST (Abstract Syntax Tree).
+    \item Transform the program's AST into a simplified IR  representation, rewriting constructs such as $\iff$ in terms of simpler ones, like $\land$, $\lor$, and $\lnot$.
+    \item Load the standard library (if desired); loading the standard library requires going through all of the steps again, starting from step 1, but skipping this step.
+    \item Then, for each definition or directive, perform the following steps:
+        \begin{enumerate}
+            \item Run the untyped optimizer, if enabled.
+            \item Perform type inference.
+            \item Perform a final IR lowering.
+            \item Run the typed optimizer, if enabled.
+            \item Interpret the final IR of the current top-level construct.
+        \end{enumerate}
+\end{enumerate}
+
+\subsection{IR Syntax}\label{sec:ir-syntax}
+
+Below is the IR Syntax for the Pecan language; the full syntax that Pecan supports is much larger, but the rest of it is ``simply'' syntactic sugar which is expanded as explained in Section~\ref{sec:ast-to-ir}.
+
+\begin{tabular}{c c l}
+     Prog & \bnfdef & Definition$^*$ \\
+     Definition & \bnfdef & $P(x_1 : \tau_1, \ldots, x_n : \tau_n)$ := Pred \\
+     & \bnfalt & Restrict $x_1,\ldots,x_n$ are $P(y_1,\ldots,y_m)$ \\
+     Pred & \bnfdef & true \bnfalt false \bnfalt Pred $\lor$ Pred \bnfalt $\lnot$ Pred \bnfalt Pred $\land$ Pred \\
+     & \bnfalt & $\exists x. $ Pred \bnfalt E $<$ E \bnfalt E $=$ E \bnfalt @A[Pred] \bnfalt $P$(E, E, \ldots, E) \bnfalt Aut($V, \mathcal{A}$) \\
+     E & \bnfdef & E + E \bnfalt E - E \bnfalt $x$ \bnfalt $i$ \bnfalt $f$(E, E, \ldots, E) 
+\end{tabular}
+
+\subsection{Type Checking}\label{sec:typing}
+
+A \term{type} in Pecan is represented by a B\"uchi automaton.
+We say that $x : \tau$ when $x \in L(\tau)$, sometimes simply written, as an analogy to logical predicates, as $\tau(x)$.
+Additionally, types may be \term{partially applied}, i.e., $\tau = P(x_1, \ldots, x_n)$, where $P$ is some B\"uchi automaton.
+Then $y : \tau$ when $(x_1, \ldots, x_n, y) \in L(P)$; and $\tau(y)$ holds when $y : \tau$.
+In the concrete syntax of Pecan, we write \pecaninline{y is tau} or \pecaninline{y} $\in$ \pecaninline{tau}; for one or more variables, we can write \pecaninline{x, y, z are tau} to mean $x : \tau$, $y : \tau$, $z : \tau$.
+Finally, there is a special type called $\inferred$, which should be thought of as a type that will be discovered later by how the value is used; or, as its name suggests, the type will eventually be \textbf{inferred} from context.
+$L(\inferred)$ is undefined---$\inferred$ is NOT represented by an automata.
+
+The judgement $\Gamma \proves x : \tau$ means that we can prove $\tau(x)$ is true in the environment $\Gamma$, which is a set of assumptions $x : \tau$.
+The set $\{ x : \exists \tau. x : \tau \in \Gamma\}$ is the \term{domain} of $\Gamma$, written $\dom{\Gamma}$.
+If for every $x \in \dom{\Gamma}$, there is a unique type $\tau$ such that $x : \tau \in \Gamma$, we say that $\Gamma$ is well-formed.
+We assume that all contexts are well-formed unless otherwise specified.
+The judgement $\Gamma \proves \prop{P}$ means that $P$ is a well-formed proposition in the environment $\Gamma$.
+A predicate $P(\overline{x : \tau}) := Q$ is well-formed when $\overline{x : \tau} \proves \prop{Q}$.
+
+We typecheck a sequence of Pecan predicates in order, starting with an empty environemnt $\Gamma = \emptyset$.
+Below, we assume that the set of all well-formed predicates, which have already been checked, is ambiently available as $\mathcal{P}$.
+Similarly, whenever we encounter a restriction, Restrict $x_1, \ldots, x_n$ are $P(y_1, \ldots, y_m)$, we update the current environment $\Gamma$ to be $\Gamma ~\cup~ \{ x_1 : P(y_1, \ldots, y_m), \ldots, x_n : P(y_1, \ldots, y_m, x_n) \} $; it is only allowed to use $P \in \mathcal{P}$, that is, predicates which have already been confirmed are well-formed.
+
+\paragraph{Structures}
+
+In order to provide a mechanism for ad-hoc polymorphism, Pecan allows the definition and use of \term{structures}.
+This feature also facilitates the use of nicer syntax for arithmetic expressions (e.g., $x + (y + z) = w$ instead of $\exists t. \texttt{adder}(x, y, t) \land \texttt{adder}(t, z, w)$) without tying ourselves to a single numeration system.
+For example, $\texttt{adder}$ will be resolved to some concrete predicate predicate based on the type of $x$, $y$, and $z$.
+The exact rules and definitions related to this feature are given below.
+We assume that structure definitions are ambiently available throughout the program.
+
+\begin{definition}
+    A \term{structure} is a pair $(t(x_1, \ldots, x_n), D)$ where each $x_i$ is an identifier, such that for some $\tau_1, \ldots, \tau_n$, $x_1 : \tau_1, \ldots, x_n : \tau_n \proves \prop{t(x_1, \ldots, x_n)}$ and $D$ is a map of identifiers to \term{call templates}; that is, it is of the form $f(y_1, \ldots, y_m)$, where each $y_i$ may be either: 1) $x_j$ for some $j$ or 2) $*$, which is pronounced ``any.''
+    
+    The \term{name} of the structure is $t$.
+\end{definition}
+
+We write the sequence of indexes of the arguments that are $*$, called \term{parameters}, as $\params(f(y_1, \ldots, y_m))$.
+A call template is called $n$-ary if $|\params(f(y_1, \ldots, y_m))| = n$.
+The sequence of the indexes of the other arguments, which are not $*$, called \term{implicits}, is written $\implicits(f(y_1, \ldots, y_m))$.
+For example, $\params(f(a, *, *, b, *, *)) = [2, 3, 5, 6]$ and $\implicits(f(a, *, *, b, *, *)) = [1, 4]$.
+We write $\params(f(y_1, \ldots, y_m))[i]$ (resp. $\implicits(f(y_1, \ldots, y_m))[i]$) to denote the $i$-th parameter (resp. implicit).
+
+We assume that typechecking has been done before evaluating, because we may need structure information at run-time to resolve \term{dynamic calls}, that is, predicate calls whose name matches some definition inside a type.
+We denote the type that an expression $e$ got when typechecking by $\typ{e}$.
+
+We write $t[P] = Q(y_1, \ldots, y_m)$ to look up a definition in the associated map $D$, and we say that $t$ \term{has a definition} for $P$ in this case.
+If $t$ does not have a definition for $P$, then we write $t[P] = \bot$.
+
+\begin{definition}
+    A structure is called \term{numeric} if it has a ternary definition for $\texttt{adder}$ and a binary definition $\texttt{less}$.
+    We write $x + y = z$ when $\texttt{adder}(x, y, z)$ holds and $x < y$ when $\texttt{less}(x, y)$ holds.
+    
+    A numeric structure may also optionally contain the following definitions; otherwise a default predicate applies.
+    
+    \begin{itemize}
+        \item[] A binary definition $\texttt{equal}$, written $x \equiv y$. 
+            If not provided, the default is simply standard equality, $x = y$.
+        
+        \item[] A unary definition $\texttt{zero}$.
+            If not provided, the default is $0^{\omega}$.
+            
+        \item[] A unary definition $\texttt{one}$.
+            If not provided, the default is $x$ such that $0 \leq x \land \forall y. y = 0 \lor x \leq y$.
+    \end{itemize}
+\end{definition}
+
+\begin{definition}
+    The \emph{predecessor} of two types $\tau$ and $\sigma$, written $\tau \join \sigma$ is given by following partial function:
+    \[
+        \tau \join \sigma = 
+        \begin{cases}
+            \sigma & \tif \tau = \inferred~\text{and $\sigma$ is numeric} \\
+            \sigma & \tif \forall \Free(\tau). \forall x. \tau(x) \implies \sigma(x) \\
+            \tau & \tif \forall \Free(\tau). \forall x. \sigma(x) \implies \tau(x) \\
+            \tau & \tif \sigma = \inferred~\text{and $\tau$ is numeric} \\
+        \end{cases}
+    \]
+\end{definition}
+
+\begin{definition}
+    We can \term{resolve} a call $P(e_1, \ldots, e_n)$ as $Q(a_1 : \tau_1, \ldots, a_m : \tau_m)$, written $P(e_1, \ldots, e_n) \leadsto Q(a_1 : \tau_1, \ldots, a_m : \tau_m)$, if $Q(a_1 : \tau_1, \ldots, a_m : \tau_m) \in \mathcal{P}$ and for some structure $t(x_1, \ldots, x_\ell)$, for each $1 \leq i \leq n$, either:
+    \begin{enumerate}
+        \item $\typ{e_i} = t(x_1, \ldots, x_\ell)$, and $t[P] = Q(b_1, \ldots, b_m)$ such that
+        for each $1 \leq j \leq m$,
+        \[
+            a_j =
+            \begin{cases}
+                x_k & \tif \implicits(Q(b_1, \ldots, b_m))[k] = j \\
+                e_k & \tif \params(Q(b_1, \ldots, b_m))[k] = j
+            \end{cases}
+        \]
+        
+        \item $\typ{e_i} = s(y_1, \ldots, y_p)$, where $s \neq t$ and $s[P] = \bot$.
+    \end{enumerate}
+    
+    or, if none of the arguments have a definition for $P$, then $P(e_1, \ldots, e_n) \leadsto P(a_1 : \tau_1, \ldots, a_m : \tau_m) \in \mathcal{P}$.
+\end{definition}
+
+\framebox{$\Gamma \proves e : \tau$} \textbf{Typing}
+\begin{mathpar}
+\inferrule*[right=Int]{
+    i \in \Z
+} { \Gamma \proves i : \inferred }
+
+\inferrule*[right=Var]{
+    x : \tau \in \Gamma
+} { \Gamma \proves x : \tau }
+
+% \reed{Not sure that I really want to support full type inference like this}
+% \inferrule*[right=Var-Env]{
+%     x \not\in \dom{\Gamma}
+% }{ \Gamma \proves x : \inferred }
+
+\inferrule*[right=Op]{ 
+    \Gamma \proves a : \tau
+    \and 
+    \Gamma \proves b : \sigma
+}{ \Gamma \proves a \oplus b : \tau \join \sigma }
+\twhere \oplus \in \{ +, -, / \}
+
+\inferrule*[right=Func]{
+    \forall i \in \{ 1, \ldots, n \}. \Gamma \proves e_i : \tau_i
+    \and
+    f(x_1 : \tau_1, \ldots, x_n : \tau_n, r : \tau) \in \mathcal{P}
+}{ \Gamma \proves f(e_1, \ldots, e_n) : \tau }
+    
+\end{mathpar}
+
+\framebox{$\Gamma \proves \prop{P}$} \textbf{Well-formed Propositions}
+\begin{mathpar}
+\inferrule*[right=Rel]{ 
+    \Gamma \proves a : \tau
+    \and 
+    \Gamma \proves b : \sigma
+    \and
+    \tau \join \sigma \neq \inferred
+}{ \Gamma \proves \prop{a \Join b} }
+\twhere \Join \in \{ \equiv, < \}
+
+\inferrule*[right=BinPred]{
+    \Gamma \proves \prop{P}
+    \and
+    \Gamma \proves \prop{Q}
+}{ \Gamma \proves \prop{P \oplus Q} }
+\twhere \oplus \in \{ \lor, \land \}
+
+\inferrule*[right=Comp]{
+    \Gamma \proves \prop{P}
+}{ \Gamma \proves \prop{\lnot P} }
+
+\inferrule*[right=Exists]{
+    \Gamma, x : \tau \proves \prop{P}
+}{ \Gamma \proves \exists x : \tau. \prop{P} }
+
+\inferrule*[right=Call]{
+    \forall i \in \{1, \ldots, n\}. \Gamma \proves e_i : \tau_i
+    \and
+    f(x_1 : \tau_1, \ldots, x_n : \tau_n) \in \mathcal{P}
+}{ \Gamma \proves \prop{f(e_1, \ldots, e_n)} }
+
+\inferrule*[right=Annotation]{
+    \Gamma \proves \prop{P} 
+}{ \Gamma \proves \prop{@A[P]} }
+
+\inferrule*[right=Automaton]{
+}{ \Gamma \proves \prop{\text{Aut}(V, \mathcal{A})} }
+\end{mathpar}
+
+\reed{TODO: Some proofs maybe (e.g., if $\Gamma \proves x : \tau$, then if $\Gamma$, then $x \in L(\tau)$, or if $\Gamma \proves \prop{P}$ then $P \evaluates \mathfrak{A}$ for some $\mathfrak{A}$}
+
+\subsection{Evaluation}\label{sec:evaluation}
+
+The Pecan interpreter is a simple tree-walking interpreter which typechecks, then processes, each top-level construct (see Section~\ref{sec:ir-syntax}) in sequential order.
+
+Operations with non-trivial implementations are described in detail below.
+Most basic automata operations (e.g., conjunction, disjunction, complementation, emptiness checking, simplification) are implemented using the Spot library \cite{duret.16.atva2}, so details of these algorithms are not presented here.
+
+\subsubsection{Automata Representation}
+
+Automata are represented by a pair of $(V, \mathcal{A})$, where $V$ is a map taking variable names to an ordered list of APs that represent it, called the \emph{variable map}, and $\mathcal{A}$ is a Spot automaton (specifically, a value of type \texttt{spot.twa\_graph}).
+For more information about the underlying representation of Spot automata, see the Spot library \cite{duret.16.atva2}.
+We use the convention that calligraphic letters represent actual B\"uchi automata, and Fraktur letters represent automata in the Pecan sense of a pair of a variable map and B\"uchi automaton.
+
+\paragraph{Variable Maps}
+A \emph{variable map} $V$ is a finite set of mappings $x \mapsto [\texttt{ap}_1, \ldots, \texttt{ap}_n]$ such that for all distinct variables $x$ and $y$, $V[x] \cap V[y] = []$.
+
+We denote by $V[x]$ the list of APs that $x$ is represented by, and we denote by $V \cup W$ the union of two variables maps union, which is only defined when the only keys that $V$ and $W$ have in common have identical APs.
+$V \sqcup W$ is the disjoint union of these maps.
+$V \setminus K$ is the variable map containing every entry $x \mapsto a \in V$ such that $x \not\in K$.
+
+For two variable maps $V$ and $W$, $V \ll W$ denotes their \emph{biased merge}, which is a pair $(U, \theta)$ of a variable map $U$ and a substitution $\theta$ such that $U = V \cup W\theta$.
+A substitution is a set of mappings $a \mapsto b$ where $a$ and $b$ are both APs, which can be applied to a variable map or an automaton to rename the APs in them.
+For example, if $\theta = \{ a \mapsto d, c \mapsto e \}$, then $\{ x \mapsto [ a, b, c ] \} \theta = \{ x \mapsto [ d, b, e ] \}$.
+When it is clear, we also write $V \ll W$ to denote just the resulting variable map, without the associated substitution.
+
+\subsubsection{Logical Operations}
+
+Fundamental automata operations (i.e., $\land$ and $\lor$, represented by $\oplus$ below) are defined below.
+\[
+    (V, \mathcal{A}) \oplus (W, \mathcal{B}) = 
+    \begin{cases}
+        (V \ll W, \mathcal{A} \oplus \mathcal{B}) & \tif |S(\mathcal{A})| < |S(\mathcal{B})| \\
+        (W \ll V, \mathcal{A} \oplus \mathcal{B}) & \owise
+    \end{cases}
+\]
+
+where $S(\mathcal{A})$ denotes the set of states of $\mathcal{A}$.
+For complements, we define $\lnot (V, \mathcal{A}) = (V, \lnot \mathcal{A})$.
+
+Finally, automata literals, written Aut($V, \mathcal{A}$) simply evaluate to be the automata they store:
+\begin{mathpar}
+
+\inferrule*[right=Automaton]{
+}{ \text{Aut}(V, \mathcal{A}) \evaluates (V, \mathcal{A}) }
+
+\end{mathpar}
+
+\subsubsection{Predicate Calls}
+
+\begin{mathpar}
+\inferrule*[right=Call]{
+    \forall i. e_i \evaluates (\mathfrak{A}_i, x_i)
+    \and
+    \nonvar(e_1, \ldots, e_n) = [k_1, \ldots, k_{\ell}]
+    \\
+    P(x_1, \ldots, x_n) \leadsto Q(y_1, \ldots y_m)
+    \and
+    Q(z_1, \ldots, z_m) := R
+    \and
+    R \evaluates \mathfrak{B}
+}{ P(e_1, \ldots, e_n) \evaluates \exists x_{k_1}, \ldots, x_{k_{\ell}}. \mathfrak{A}_1 \land \cdots \land \mathfrak{A}_n \land \mathfrak{B}[y_1 / z_1, \ldots, y_m / z_m] }
+\end{mathpar}
+
+where $\mathfrak{B}[y_1 / z_1, \ldots, y_m / z_m]$ denotes substituting each $y_j$ for $z_j$ in $\mathfrak{B}$, defined in Section~\ref{sec:impl-substitution}, and $\nonvar(e_1, \ldots, e_n)$ denotes the nonvariable positions in $e_1, \ldots, e_n$.
+
+The rule for evaluating predicate calls is rather complicated, due to the possibility of dynamic calls.
+Fundamentally, the rule does the following:
+
+\begin{enumerate}
+    \item Evaluates each argument $e_i$ as $(\mathfrak{A_i} x_i)$.
+    \item Resolves the call $P$ as some predicate $Q$
+    \item Evaluates the body of $Q$, $R$ and then substitutes in the variables $y_i$ (in the resolve call, some of which will be the result variables $x_i$) as appropriate.
+    \item Projects out the intermediate result variables $x_{k_p}$, where the $k_p$ are the nonvariable positions in $e_1, \ldots, e_n$.
+        This means that it only makes sense to use expressions whose output values will be well-behaved: that is, the resulting automaton should be the same regardless of which output was ``used.''
+        Pecan will not automatically check this condition for performance reasons, but it is possible to do automatically.
+\end{enumerate}
+
+\subsubsection{Expressions}
+
+Denote by $\Free(E)$ the list of free variables occurring in $E$.
+For example, $\Free(a + b + c) = [a, b, c]$.
+Denote by $E[v/x]$ the expression $E$ with $v$ substituted for $x$ where $x \in \Free(E)$.
+
+An expression $E$ evaluates to a pair $(\mathfrak{A}, x)$ of an automaton $\mathfrak{A}$ and a variable $x$ where $\mathfrak{A}$ accepts $(v_1, \ldots, v_n, x)$ such that $\Free(E) = [x_1, \ldots, x_n]$ and $E[v_1/x_1, \ldots, v_n/x_n] = x$.
+
+Note that many rules, like \textsc{Add} or \textsc{Equal} may need to evaluate subexpressions.
+However, while evaluating a subexpression $e$, it may be that we generate fresh variables to store the result, which must be projected out.
+The only case in which this does not occur is when the subexpression is itself a variable.
+
+\begin{mathpar}
+\inferrule*[right=Var]{ }{ x \evaluates (\top, x) }
+
+\inferrule*[right=Add]{ 
+    a \evaluates (\mathfrak{A}, x)
+    \\
+    b \evaluates (\mathfrak{B}, y)
+    \\
+    V = \{ v : (e, v) \in \{ (a,x), (b,y) \}, e \neq v \}
+    \\
+    (x + y = z) \evaluates \mathfrak{C}
+} { a + b \evaluates (\proj_V(\mathfrak{A} \land \mathfrak{B} \land \mathfrak{C}), z) }
+\twhere z ~ \text{is fresh}
+
+\inferrule*[right=Sub]{ 
+    a \evaluates (\mathfrak{A}, x)
+    \\
+    b \evaluates (\mathfrak{B}, y)
+    \\
+    V = \{ v : (e, v) \in \{ (a,x), (b,y) \}, e \neq v \}
+    \\
+    (z + y = x) \evaluates \mathfrak{C}
+} { a - b \evaluates (\proj_V(\mathfrak{A} \land \mathfrak{B} \land \mathfrak{C}), z) }
+\twhere z ~ \text{is fresh}
+
+\inferrule*[right=Zero]{ }{ 0 \evaluates (\texttt{zero}(x), x) }
+\twhere x ~ \text{is fresh}
+
+\inferrule*[right=One]{ }{ 1 \evaluates (\texttt{one}(x), x) }
+\twhere x ~ \text{is fresh}
+
+\inferrule*[right=Int]{
+    \overbrace{1 + 1 + \cdots + 1}^{n~\text{times}} \evaluates (\mathfrak{A}, x)
+}{ n \evaluates (\mathfrak{A}, x) }
+\twhere x ~ \text{is fresh}
+
+\inferrule*[right=Func]{
+    f(e_1, \ldots, e_n, x) \evaluates \mathfrak{A}
+}{ f(e_1, \ldots, e_n) \evaluates (\mathfrak{A}, x) }
+\twhere x ~ \text{is fresh}
+
+\inferrule*[right=Equal]{ 
+    a \evaluates (\mathfrak{A}, x)
+    \and
+    b \evaluates (\mathfrak{B}, y)
+    \\
+    V = \{ v : (e, v) \in \{ (a,x), (b,y) \}, e \neq v \}
+    \\
+    (x \equiv y) \evaluates \mathfrak{C}
+} { a = b \evaluates \proj_V(\mathfrak{A} \land \mathfrak{B} \land \mathfrak{C}) }
+
+\inferrule*[right=Less]{ 
+    a \evaluates (\mathfrak{A}, x)
+    \and
+    b \evaluates (\mathfrak{B}, y)
+    \\
+    V = \{ v : (e, v) \in \{ (a,x), (b,y) \}, e \neq v \}
+    \\
+    (x < y) \evaluates \mathfrak{C}
+} { a < b \evaluates \proj_V(\mathfrak{A} \land \mathfrak{B} \land \mathfrak{C}) }
+
+\end{mathpar}
+
+\subsubsection{Existential Quantification}
+
+\begin{mathpar}
+\inferrule*[right=Exist]{
+    \tau(x) \land P \evaluates (V, \mathcal{A})
+}{ \exists x \in \tau. P \evaluates (V \setminus \{x\}, \proj_x(\mathcal{A})) }
+\end{mathpar}
+
+Define $\proj_x(\mathfrak{A})$ to be $\proj_{\mathcal{V}[x]}(\mathcal{B})$, defined in the next section.
+
+% \reed{Useless crossref atm, this is the next section...}
+% For the actual implementation of the projection operation, see Section \ref{sec:impl-projection}.
+
+\subsubsection{Projection}\label{sec:impl-projection}
+
+Let $\mathfrak{A} = (Q, \Delta, \delta, q_0, F)$ be a B\"uchi automaton where $\Delta$ is the set of formulas involving $\land$, $\lor$, and $\lnot$ on a finite set $X$ of APs.
+\reed{This is a nonstandard way to represent B\"uchi automata, but it's basically how Spot does it internally, and it's convenient for defining projection and substitution. I guess the alphabet is \emph{really} the set of equivalence classes of formulas modulo $\equiv$ such that $\varphi \equiv \psi$ if and only if $\varphi$ holds whenever $\psi$ does, but not sure that's necessary to write or interesting enough to include.}
+We compute $\proj_Y(\mathcal{A}) = (Q, \Delta', \delta', q_0, F)$, where $Y$ is a finite list of APs and $\Delta'$ is the set of formulas on the APs $X \setminus Y$.
+The new transition relation $\delta'$ is defined as
+\[
+    \delta' = \left\{ \left( s, d, \bigvee_{x \in Y} (\varphi[\top / x] \lor \varphi[\bot / x])  \right)  : (s, d, \varphi) \in \Delta' \right\}
+\]
+where $\varphi[a/x]$ is denotes $\varphi$ with $a$ substituted for $x$.
+That is, for every transition from a state $s$ to a state $d$ on symbol $\varphi$, we have a transition from $s$ to $d$ whenever $\varphi$ holds regardless of whether any variable $x \in Y$ is true or false.
+
+\subsubsection{Substitution}\label{sec:impl-substitution}
+
+We define the substitution $\mathcal{A}[y/x]$, replacing $x$ by $y$ in the automaton $\mathcal{A} = (V, \mathcal{B})$ where $\mathcal{B} = (Q, \Delta, \delta, q_0, F)$ is a B\"uchi automaton as in Section~\ref{sec:impl-projection} with variables $X$ and underlying alphabet $\Sigma$.
+Let $A = [a_1, \ldots, a_n]$ be the list of APs representing $x$ (i.e., $A = V[x]$), and let $B = [b_1, \ldots, b_n]$ be the list of APs representing $y$, which we assume is ambiently available.
+This can be stored globally, and generated when needed if the variable $y$ has never been used before.
+If $y$ has never been used before, we generate a new list of $n$ fresh APs.
+
+Define $\mathcal{A}[y/x] := (V', \mathcal{B}')$ where $V' = (V \setminus \{ x \}) \cup \{ y \mapsto B \}$, and $\mathcal{B}' = (Q, \Delta', \delta', q_0, F)$, with the new set of variables $X' = (X \setminus A) \cup B$ and the same underlying alphabet, such that:
+\[
+    \Delta' = \{ \varphi[b_1/a_1, \ldots, b_n/a_n] : \varphi \in \Delta \}
+\]
+and
+\[
+    \delta' = \{ (s, d, \varphi[b_1/a_1, \ldots, b_n/a_n]) : (s, d, \varphi) \in \delta' \}
+\]
+
+\subsection{AST to IR Conversion}\label{sec:ast-to-ir}
+
+The following conversions are performed when converting the AST to the IR:
+
+\begin{itemize}
+    \item $a \iff b$ becomes $(a \implies b) \land (b \implies a)$
+    \item $a \implies b$ becomes $\lnot a \lor b$
+    \item $k \cdot x$ becomes $\overbrace{x + \cdots + x}^{k \text{ times}}$
+    \item $a \neq b$ becomes $\lnot (a = b)$
+    \item $a > b$ becomes $b < a$
+    \item $a \geq b$ becomes $b < a \lor a = b$
+    \item $-a$ becomes $0 - a$
+    \item $a \leq b$ becomes $a < b \lor a = b$
+    \item $W[i] = W[j]$ becomes $W(i) \iff W(j)$
+    \item $W[i] \neq W[j]$ becomes $\lnot (W[i] = W[j])$
+    \item $W[i..j] = W[k..\ell]$ becomes $j + k = i + \ell \land \forall n \in \typ{i}. i + n < j \implies W[i + n] = W[k + n]$
+    \item $W[i..j] \neq W[k..\ell]$ becomes $\lnot (W[i..j] = W[k..\ell])$
+    \item $\forall x_1 \in \tau_1, \ldots, x_n \in \tau_n. P$ becomes $\lnot (\exists x_1 \in \tau_1, \ldots, x_n \in \tau_n. \lnot P)$
+    \item $\exists x_1 \in \tau_1, \ldots, x_n \in \tau_n. P$ becomes $\exists x_1 \in \tau_1. \ldots. \exists x_n \in \tau_n. P$
+\end{itemize}
+
+where $\typ{i}$ denotes the type of $i$.

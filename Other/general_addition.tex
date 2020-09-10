@@ -1,0 +1,143 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=blue,
+}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}
+\theoremstyle{remark}
+\newtheorem{example}[definition]{Example}
+\theoremstyle{plain}
+\newtheorem{theorem}[definition]{Theorem}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+
+\theoremstyle{definition}
+\newtheorem{tldr}[definition]{TLDR}
+
+\usepackage{graphicx}
+\graphicspath{ {./images/} }
+
+\newcommand{\reed}[1]{{\color{magenta}\bfseries [#1]}}
+
+
+\newcommand{\term}[1]{\emph{\textbf{#1}}}
+%%Use \term to highlight new terminologies.
+\begin{document}
+
+\section{Introduction}
+
+If you read nothing else, read section~\ref{sec:usage}.
+
+It is assumed you are familiar with Ostrowski-$\alpha$ numeration systems.
+
+\reed{Below terminology/notation probably needs improvements}
+
+Let $\alpha = [a_0, a_1, \ldots]$ be the continued fraction representation of some number $\alpha$.
+Define $\alpha_{<k}$, the set of \textit{$k$-bounded continued fractions}, by:
+
+\begin{equation*}
+    \alpha_{<k} := \{ \alpha : \alpha = [ a_0, a_1, \ldots] \text{ where } \forall a_i, 0 < a_i \leq k\}
+\end{equation*}
+
+A \textit{$k$-bounded Ostrowski numeration system} \reed{is there a better term for this?} is an Ostrowski numeration system for some $\alpha \in \alpha_{<k}$.
+
+We are interested in creating automata that can recognize/work in arbitrary bounded Ostrowski numeration systems, that is, one automata defining each of the following operations for every $\alpha \in \alpha_{<k}$ for arbitrary $k$:
+
+\begin{itemize}
+    \item addition, $+_{\alpha}$
+    \item less than, $<_{\alpha}$
+    \item recognition, $V_{\alpha}$
+\end{itemize}
+
+\section{Algorithm}
+
+The algorithm for generation is a modified version of the algorithm from the paper ``Ostrowski Numeration Systems, Addition and Finite Automata''.
+The algorithms follow exactly their description, except we include the values of the continued fraction, $\alpha$ in each state.
+
+For example, in the unmodified Algorithm 1, we kept track of the values $(v_1,v_2,v_3)$ and $(w_1,w_2,w_3)$ of the input and output of the window, respectively, as well as the index in the repeated part of the continued fraction (and some other bookkeeping information).
+We simply extend each state to continue $(u_1,u_2,u_3)$, the corresponding continued fraction values for the window possible.
+The transitions are also extended, instead of just containing values $v_4$ and $w_4$, corresponding to the next values in the window for the input and output, we also include $u_4$, the next digit in the continued fraction.
+
+\section{Usage}\label{sec:usage}
+\subsection{Automata Generation}
+To use the program, clone it from GitHub (\url{https://github.com/ReedOei/OstrowskiAutomata}), and install using \texttt{stack install}.
+
+If you are using Linux (or a Mac, probably), you can follow these directions.
+Assuming Walnut is installed in \texttt{\$HOME/Walnut}, you can simply run \texttt{bash general-automata.sh k} to generate and prove the correctness of the general automata for all bounded Ostrowski numerations systems with $k$.
+
+\subsection{Interfacing with Walnut}
+\reed{Maybe be a way to improve this interface. Not familiar enough with Walnut to say for sure, but it doesn't seem possible. We could write a simple DSL for writing Walnut queries, however, if it becomes too cumbersome.}
+
+Because we have essentially defined infinitely many numeration systems, we are unable write Walnut queries in the typical syntax.
+Instead, we must use special predicates for each operation.
+For example, to write $x +_{\alpha} y = z$ for $\alpha \in \alpha_{<k}$, we write:
+
+\texttt{\$recog\_k($\alpha$,x) \& \$recog\_k($\alpha$,y) \& \$recog\_k($\alpha$, z) \& \$add\_k($\alpha$,x,y,z)}.
+
+It is critical that \textbf{every variable} is in same numeration system (that is, the same $\alpha$); otherwise adding/performing other operations makes no sense \reed{tbh, I haven't checked this true, but I'd be surprised if it wasn't}.
+While some of the predicates (e.g., addition) do check this internally, it's probably better not to rely on that behavior.
+
+When queries are written like this, we may then quantify over all $k$-bounded Ostrowski numeration systems.
+
+The following operations are defined by the program, in addition to the general $k$-bounded Sturmian word, $C_{<k}$.
+Note we are able to define the general $k$-bounded Sturmian word because it's digits depend only on the number of zeroes at the beginning (in least significant digit) of the index in the Ostrowski-$\alpha$ numeration system, so as long as the index is a valid number, we may use the same automatic word automaton for every $k$-bounded numeration system.
+Again, take care to ensure all numbers are in the same numeration system, or risk getting incorrect results when using the general Sturmian word.
+
+\begin{itemize}
+    \item $x <_{\alpha} y$: \texttt{\$lt\_k(x,y)}
+    \item $x =_{\alpha} y$: \texttt{\$eq\_k(x,y)}(\reed{You can probably rely on the default Walnut = for this one}
+    \item $V_{\alpha}(x)$: \texttt{\$recog\_k($\alpha$,x)}
+    \item $x +_{\alpha} y = z$: \texttt{\$add\_k($\alpha$,x,y,z)}
+    \item $0_{\alpha}$: \texttt{Ez \$zero\_k(z)}. \textbf{IMPORTANT}: You need to create a ``new'' 0 for every time you use it--numbers can be various lengths, one zero will always be the same length... \reed{Perhaps we can use something else for this, given $0$ has the same representation in every base}
+    \item $1_{\alpha}$: \texttt{Eo \$one\_k($\alpha$,o}. Note we must defined $1$ for every base, because, when the continued fraction begins with a $1$ (i.e., $a_0 = 1$), then $1$ is of the form $010^*$.
+    Otherwise, it is of the form $10^*$ (in least significant digit form).
+    \item $2 \times_{\alpha} x = y$: \texttt{\$double\_k(a,x,y)} This is equivalent to $x +_{\alpha} x = z$, and is included for convenience only.
+    \item $x -_{\alpha} y = z$: \texttt{\$sub\_k(a,x,y,z)} This is also included for convenience only, as it is not strictly necessary, as subtraction can (as this automaton is) be defined in terms of $+_{\alpha}$.
+\end{itemize}
+
+Note all constants/multiplication by constants can be achieved through repeated adding \reed{Perhaps there is some way to simplify this, but I suspect it's probably what Walnut does}
+
+\section{TODO}
+\subsection{Check the Walnut Queries}
+Walnut has verified that the addition automata for $k = 2$ and $k = 3$ are correct.
+That is, for every $\alpha_{< k}$, the automata successfully recognize the language $\{(\alpha,a,b,c) : \alpha \in \alpha_{< k}, a +_{\alpha} b = c \}$.
+However, it is possible that my queries themselves are wrong, so somebody should double-check them.
+The proofs and associated definitions can be found here: \url{https://github.com/ReedOei/OstrowskiAutomata/tree/master/results/proofs}.
+
+\subsection{Perfomance}
+
+Currently, the program is rather inefficient in terms of memory complexity.
+While the final automata for each algorithm are quite small, the intermediate automata, especially for Algorithm 1, are huge.
+This will need improvement
+
+For example, before minimization and pruning unreachable states, the automaton for Algorithm 1 with $k = 3$ has about $4$ million states (to be exact, $4194305$ states).
+After removing unreachable states, there are $831841$ states.
+After minimization, there are just $37$, indicating there are definitely some major improvements to be made.
+
+Initial generation takes very little time, but a lot of memory.
+Minimization is the longest running of the steps (by far), but it allocates about as much memory as the initial generation step.
+Pruning unreachable states is negligible in terms of runtime and memory.
+
+\subsection{Prove Theorems}
+I have yet to prove any interesting theorems, other than that addition works, so we should probably work on this at some point.
+
+\subsection{Generalize Further}
+If possible, we could generalize even further to arbitrary $\alpha$.
+However, we will (probably) need a completely different approach, even if there weren't memory issues.
+
+\end{document}

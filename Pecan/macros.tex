@@ -1,0 +1,66 @@
+%\newcommand{\reed}[1]{\relax}
+%\newcommand{\eric}[1]{\relax}
+%\newcommand{\christian}[1]{\relax}
+%\newcommand{\philipp}[1]{\relax}
+%\newcommand{\Fix}[1]{\relax}
+\newcommand{\reed}[1]{{\color{magenta}\bfseries [#1]}}
+\newcommand{\eric}[1]{{\color{green}\bfseries [#1]}}
+\newcommand{\christian}[1]{{\color{orange}\bfseries [#1]}}
+\newcommand{\philipp}[1]{{\color{blue}\bfseries [#1]}}
+\newcommand{\Fix}[1]{{\color{red}\bfseries [#1]}}
+\newcommand{\Comment}[1]{}
+\newcommand{\Space}[1]{}
+\newcommand{\Num}[1]{#1}
+
+\newcommand{\term}[1]{\emph{#1}}
+
+\newcommand{\Free}{\textbf{Free}}
+
+\newcommand{\evaluates}{\Downarrow}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+
+\newcommand{\join}{\wedge}
+\newcommand{\meet}{\vee}
+\newcommand{\proves}{\vdash}
+
+\newcommand{\dom}{\text{dom}~}
+
+\newcommand{\proj}{\text{proj}}
+
+\newcommand{\implicits}{\texttt{implicit}}
+\newcommand{\params}{\texttt{params}}
+\newcommand{\nonvar}{\texttt{nonvar}}
+
+\newcommand{\tand}{\ensuremath{~\text{and}~}}
+\newcommand{\tor}{\ensuremath{~\text{or}~}}
+\newcommand{\twhere}{\ensuremath{~\text{where}~}}
+\newcommand{\tif}{\ensuremath{~\text{if}~}}
+\newcommand{\tsuchthat}{\ensuremath{~\text{s.t.}~}}
+\newcommand{\owise}{\ensuremath{~\text{otherwise}~}}
+
+\newcommand{\brackets}[3]{\ensuremath{{\left#1 {#3} \right#2}}}
+\newcommand{\parens}[1]{\brackets{(}{)}{#1}}
+\newcommand{\angles}[1]{\brackets{<}{>}{#1}}
+\newcommand{\curlys}[1]{\brackets{\{}{\}}{#1}}
+\newcommand{\squares}[1]{\brackets{[}{]}{#1}}
+
+\newcommand{\bnfdef}{\ensuremath{\Coloneqq}}
+\newcommand{\bnfalt}{\ensuremath{\mid}\xspace}
+
+\newcommand{\inferred}{\texttt{Inferred}}
+\newcommand{\prop}[1]{#1 ~ \text{prop}}
+\newcommand{\typ}[1]{\text{typ}\parens{#1}}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}
+\theoremstyle{remark}
+\newtheorem{example}[definition]{Example}
+\theoremstyle{plain}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{conjecture}[definition]{Conjecture}

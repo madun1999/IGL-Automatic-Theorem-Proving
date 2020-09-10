@@ -1,0 +1,136 @@
+\section{Automata Formats}\label{sec:aut-format}
+
+Below are details on all the automata formats that Pecan supports.
+Note that all formats support both deterministic and nondeterministic automata.
+
+\subsection{HOA}
+
+Pecan supports the HOA format \cite{hoa-format}, in which case when loading the parameter \textbf{must} be given the same names as the APs in the automaton, in the same order.
+This format only supports binary alphabets; to avoid this limitation you must either binary-encode your automaton yourself or use another format.
+Both the Walnut and Pecan formats support arbitrary integer base alphabets.
+
+To use this format, write:
+\begin{pecan}
+#load("filename.txt", "hoa", pred_name(arg1, arg2, ...))
+\end{pecan}
+
+An example is shown in Figure~\ref{fig:example-hoa-aut}.
+\begin{figure}
+    \centering
+    \begin{lstlisting}[basicstyle=\normalsize\ttfamily]
+HOA: v1
+States: 2
+Start: 1
+AP: 1 "a" 
+acc-name: Buchi
+Acceptance: 1 Inf(0)
+properties: trans-labels explicit-labels state-acc complete
+properties: deterministic stutter-invariant terminal
+--BODY--
+State: 0 {0} 
+[t] 0
+State: 1
+[!0] 0
+[0] 1
+--END--
+    \end{lstlisting}
+    \caption{An automaton in the HOA format, accepting words that contain at least one \texttt{0}.}
+    \label{fig:example-hoa-aut}
+\end{figure}
+
+\subsubsection{HOA (Modified)}
+
+Pecan also supports the HOA format as described above, except that the first line may be of the form:
+
+\begin{lstlisting}[basicstyle=\normalsize\ttfamily]
+VAR_MAP: PYTHON_DICT
+// Example:
+VAR_MAP: {'a': ['__ap76', '__ap77'], 'n': ['__ap78', '__ap79']}
+\end{lstlisting}
+
+where \lstinline{PYTHON_DICT} is a valid Python dictionary mapping variable names to the ordered collection of APs (atomic propositions) that represents them.
+The rest of the file follows the HOA format.
+
+\subsection{Walnut}
+
+Pecan supports the same format that Walnut \cite{walnut} uses.
+Pecan uses the Unix standard of using files encoded using UTF-8 with no BOM (as this would be redundant for UTF-8), unlike Walnut which (at the time of writing) requires UTF-16BE and allows, but does not require, a BOM.
+This format supports automata in any integer base (i.e., those with an alphabet like $\{0,1,2,\ldots\}$).
+
+To use this format, write:
+\begin{pecan}
+#load("filename.txt", "walnut", pred_name(arg1, arg2, ...))
+\end{pecan}
+
+An example is shown below in Figure~\ref{fig:example-walnut-aut}.
+
+\begin{figure}
+    \centering
+    \begin{lstlisting}[basicstyle=\normalsize\ttfamily]
+    {0,1,2}
+    0 0
+    0 -> 0
+    0 -> 1
+    1 -> 0
+    2 -> 0
+    1 1
+    0 -> 1
+    2 -> 1
+    \end{lstlisting}
+    \caption{An automaton in the Walnut format that accepts words that eventually end in $(0^* 2)^{\omega}$.}
+    \label{fig:example-walnut-aut}
+\end{figure}
+
+See the Walnut manual for details \url{https://github.com/hamousavi/Walnut/blob/master/Automatic\%20Theorem\%20Proving\%20in\%20Walnut.pdf}.
+
+\subsection{Pecan}
+
+Pecan also supports it's own automata format, which is based on the Walnut format but allows for more descriptive state names and comments.
+This format supports automata in any integer base (i.e., those with an alphabet like $\{0,1,2,\ldots\}$).
+
+To use this format, write:
+\begin{pecan}
+#load("filename.txt", "pecan", pred_name(arg1, arg2, ...))
+\end{pecan}
+
+Somewhat informally, the format is:
+
+\begin{lstlisting}[basicstyle=\normalsize\ttfamily]
+AUTOMATON ::= ALPHABET_LINE STATE*
+
+ALPHABET_LINE ::= INPUT+
+INPUT ::= "{" 0, 1, ... "}"
+
+STATE ::= LABEL ":" (0 | 1) TRANSITION*
+SYMBOL ::= INTEGER*
+LABEL ::= [^:]+
+TRANSITION ::= SYMBOL "->" LABEL
+
+COMMENT ::= "//" .*
+\end{lstlisting}
+
+An example is shown in Figure~\ref{fig:example-pecan-aut}.
+
+\begin{figure}
+    \centering
+    \begin{lstlisting}[basicstyle=\normalsize\ttfamily]
+// Input is a natural number with each digit encoded in binary and separated by 2s.
+{0,1,2}
+// All inputs must start with 2
+start: 0
+2 -> zero,even
+zero,even: 0
+0 -> zero,even
+2 -> zero,odd
+zero,odd: 0
+0 -> zero,odd
+1 -> done,odd
+2 -> zero,even
+done,odd: 1
+0 -> done,odd
+1 -> done,odd
+2 -> done,odd
+    \end{lstlisting}
+    \caption{An automaton in the Pecan format, accepting $n$ such that the $n$-th digit of the characteristic Sturmian word (of any slope) is $1$.}
+    \label{fig:example-pecan-aut}
+\end{figure}

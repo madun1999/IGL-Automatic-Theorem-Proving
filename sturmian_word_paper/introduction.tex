@@ -1,0 +1,16 @@
+\section{Introduction}
+
+When $\alpha$ is a quadratic irrational number, it is possible to define deterministic finite automata which recognize natural numbers written in the Ostrowski-$\alpha$ numeration system, as well as addition automata, which recognize addition in this numeration system~\cite{ht-ostrowski}. It follows that the theory $(\mathbb{N}, +, V_{\alpha})$ is decidable, where $V_{\alpha}$ is ... Therefore, we can decide any proposition defined solely in terms of universal and existential quantifiers, boolean operations, addition, and Ostrowski-$\alpha$ representations. We do this using the automated theorem prover Walnut~\cite{walnut}.
+
+Many properties that are known about automatic sequences, and in particular about Sturmian words, have long and often complicated proofs.
+These proofs can often be replaced by automated proofs using a decision procedure, like Walnut, as shown by \reed{fib word, also critical exponent where they do the k = 5 case}.
+This allows for easier exploration of the properties of automatic sequences and Sturmian words, and  the constructive nature of the decision procedure allows us generate all counterexamples for a property that does not hold.
+To take advantage of this, we implement automata which let us prove properties of entire classes of Sturmian words at once; we also use our tools to create automata for the Ostrowski numeration systems for $\sqrt{2}$ and $\sqrt{3}$.
+
+This paper is organized as follows.
+In Section~\ref{sec:background}, we give background on the Ostrowski-$\alpha$ numeration system and the characteristic Sturmian words based on $\alpha$.
+In Section~\ref{sec:automata}, we define the $k$-bounded Ostrowski numeration systems and $k$-bounded Sturmian words and show that it is possible, given $k$, to define automata which recognize valid representations of natural numbers and addition for any $k$-bounded Ostrowski numeration system.
+In Section~\ref{sec:specific-theorems}, we use  Walnut~\cite{walnut} to conduct a study, similar to \citeauthor{fibword}, of properties of specific Sturmian words.
+In Section~\ref{sec:conjectures}, we use our automata for $k$-bounded Sturmian words, inspired by the results from Section~\ref{sec:specific-theorems}, to create conjectures about both bounded and unbounded Sturmian words and prove base cases for these conjectures.
+
+Our implementation of all the automata and formulas below are available on our GitHub: \url{https://github.com/ReedOei/OstrowskiAutomata}.

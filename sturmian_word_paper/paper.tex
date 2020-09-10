@@ -1,0 +1,51 @@
+oil\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{xspace}
+\usepackage{enumerate}
+\usepackage{tikz}
+\usepackage{tkz-euclide}
+
+\usepackage[
+backend=biber,
+style=numeric,
+sorting=ynt
+]{biblatex}
+
+\addbibresource{biblio.bib}
+
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=blue,
+}
+
+\author{Eric Ma, Reed Oei, Steve O'Brien, Dagoberto Saenz, Mihika Poddar\\Eion Blanchard, Alexi Block Gorman, Erik Walsberg, Philipp Hieronymi}
+
+\usepackage{graphicx}
+\graphicspath{ {./images/} }
+
+\input{macros}
+
+\title{Automated Proofs of Properties of Sturmian Words}
+\begin{document}
+
+\maketitle
+
+\input{abstract}
+\input{introduction}
+\input{background}
+\input{automata}
+\input{theorems}
+\input{bounded_theorems}
+
+\printbibliography
+
+\end{document}

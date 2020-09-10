@@ -1,0 +1,293 @@
+\section{Praline}\label{sec:praline}
+
+Praline is a scripting language intended to be a macro system that makes writing Pecan programs easier.
+It is a fairly ``standard'' functional language.
+As the usage of Praline is not strictly required and exists only for convenience, we omit a formal definition of it.
+The major features of Praline are:
+
+\begin{itemize}
+    \item Built-in support for integers, strings, booleans, (linked) lists, and tuples.
+    
+\begin{pecan}
+Display 42^6. // 5489031744
+Display "hello " ^ "world". // hello world
+Display [1..5]. // [1,2,3,4,5]
+Display snd ("test", 1). // 1
+\end{pecan}
+    
+    \item Partial application
+    
+\begin{pecan}
+Define add x y := x + y.
+Display map (add 10) [1..10]. // [11,12,13,14,15,16,17,18,19,20]
+\end{pecan}
+    
+    \item Lambda functions:
+\begin{pecan}
+Display (\i => i^2) 10. // 100
+\end{pecan}
+    
+    \item Pattern matching
+\begin{pecan}
+Display match [1..10] with 
+        case fst :: snd :: _ => fst + snd 
+        end. // 3
+\end{pecan}
+        
+    \item Ability to interact easily with Pecan:
+\begin{pecan}
+Display example natFormat { x > 33 & exists y. x=2*y }. // [(x,48)]
+\end{pecan}
+
+\end{itemize}
+
+\subsection{Usage}
+
+One of the main uses of Praline is to automate the process of checking certain sets of properties.
+For example, suppose we have a predicate \pecaninline{R(x, y)} which is supposed to represent some partial order on a type \pecaninline{T}, and some equality predicate \pecaninline{EQ(x, y)}.
+Ordinarily, we would have to write three predicates, and three assertions, as follows.
+
+\begin{pecan}
+R_irrefl() := forall x is T. !R(x, x)
+#assert_prop(true, R_irrefl)
+R_antisym() := forall x is T. forall y is T. if R(x, y) & R(y, x) then EQ(x, y)
+#assert_prop(true, R_antisym)
+R_trans() := forall x is T. forall y is T. forall z is T. 
+              if R(x, y) & R(y, z) then R(x, z)
+#assert_prop(true, R_trans)
+\end{pecan}
+
+However, using Praline, we can write a macro that generates these definitions for us, given \pecaninline{R}, \pecaninline{T}, and \pecaninline{EQ}.
+Such a macro exists in Pecan's standard library, which we can call as follows:
+
+\begin{pecan}
+Execute partialOrderCheck R EQ T.
+\end{pecan}
+
+There are three commands for interacting with Praline:
+
+\begin{pecan}
+Define function args := body.
+\end{pecan}
+
+Defines a new function with the specified arguments and body.
+
+\begin{pecan}
+Display term.
+\end{pecan}
+
+Evaluates the term and then prints the result to the screen.
+
+\begin{pecan}
+Execute term.
+\end{pecan}
+
+The same as \pecaninline{Display}, except the result is not printed to the screen.
+
+\subsubsection{Examples}
+
+\paragraph{Factorial}
+
+Praline can also be used as a general purpose programming language, although that is not its main purpose.
+For example, the following is the factorial function defined in Praline:
+
+\begin{pecan}
+Define factorial n :=
+    if n = 0 then 1
+    else n * factorial (n - 1).
+
+Display factorial 24. // 620448401733239439360000
+\end{pecan}
+
+\paragraph{Integer formatting}
+
+The \pecaninline{Example} directive is often very useful for debugging, but it can be confusing to see raw $\omega$-words, so instead it is convenient to define \textbf{formats}, which can then be used as follows.
+There is also an alternate syntax which is somewhat more readable, shown below.
+
+\begin{pecan}
+Example (myFormat, { P(x) }).
+Example using myFormat of { P(x) }.
+\end{pecan}
+
+The following program formats an accepting word (which has been converted to binary) as a natural number.
+Natural numbers in Pecan are of the form $x0^w$ where $x$ is some binary string, because natural numbers are finite.
+
+\reed{Make sure these examples are up to date}
+\begin{pecan}
+Define fromBinary := foldr (\a b => a + 2*b) 0.
+Define natFormat var reps :=
+    let [(prefix, cycle)] = reps in
+        if cycle = [0] then
+            (var, if isEmpty prefix then "0" else toString (fromBinary prefix))
+        else
+            (var, omegaWord prefix cycle ^ " (NOT A VALID NATURAL NUMBER)").
+\end{pecan}
+
+Note that \pecaninline{stdFormat} formats the accepting word as an $\omega$-word.
+
+\paragraph{Graphing}
+
+The following program can be used to obtain a subset of the graph of some function defined in Pecan.
+
+\begin{pecan}
+Define graphPoint format func x :=
+    let y be { func(x, y) } in
+    (x, lookup "y" (example format y)).
+Define graph format F := map (graphPoint format F).
+
+Restrict x, y are nat.
+double_f(x, y) := 2*x = y
+Display graph natFormat double_f [1,2,3,4]. // [(1,2),(2,4),(3,6),(4,8)]
+\end{pecan}
+
+\subsection{Features}
+
+\subsubsection{Directives}
+
+Praline has three primitive directives: \pecaninline{Alias}, \pecaninline{Execute}, and \pecaninline{Define}.
+
+\pecaninline{Alias} allows defining \textbf{new} directives which are simply abbreviations for other directives, possibly even other aliases. 
+See Section~\ref{sec:aliases} for more details.
+
+\subsubsection{Aliases}
+
+The aliases defined in the standard library are:
+
+\begin{pecan}
+Alias "Display" ==> Execute print .
+Alias "Example" ==> Display uncurry example .
+Alias "Theorem" ==> Execute uncurry theoremCheck .
+\end{pecan}
+
+To use these (as we have already in some of the above examples), we may write the following:
+\begin{pecan}
+Display factorial 24.
+Example (natFormat, { x > 10 }) .
+\end{pecan}
+These rewrite into:
+\begin{pecan}
+Execute print (factorial 24).
+Execute print (uncurry example (natFormat, {x > 10 })).
+\end{pecan}
+
+It is generally preferable to use \pecaninline{Theorem} as opposed to \pecaninline{#assert_prop}, because it allows for more descriptive names, like the following:
+\begin{pecan}
+Theorem ("Addition of natural numbers is commutative.", {
+    $\color{red} \forall$ x, y are nat. x + y = y + x
+}).
+\end{pecan}
+
+\subsection{Builtins}
+
+\begin{pecan}
+check pecanTerm
+\end{pecan}
+
+Returns \pecaninline{true} if the input term is always true, and \pecaninline{false} otherwise.
+
+\begin{pecan}
+toString term
+\end{pecan}
+
+Converts the evaluated term to a string.
+
+\begin{pecan}
+print term
+\end{pecan}
+
+Prints the term to the screen, and returns \pecaninline{true}.
+
+\begin{pecan}
+emit pecanTerm
+\end{pecan}
+
+Outputs the specified Pecan term as a definition in the current location in the file and returns \pecaninline{true}.
+
+\begin{pecan}
+freshVar
+\end{pecan}
+
+Returns a string representing a fresh (i.e., unused variable name).
+
+\begin{pecan}
+acceptingWord pecanTerm
+\end{pecan}
+
+Returns an associative list mapping variable names to \textbf{accepting words}, a pair of a \textbf{prefix} and a \textbf{cycle}.
+For example, the accepting word \pecaninline{([true,false,true], [false])} represents the $\omega$-word $1010^\omega$.
+
+\begin{pecan}
+toChars str
+\end{pecan}
+
+Converts \pecaninline{str} into a list of strings representing the characters in the string.
+For example, \pecaninline{toChars "blah" = ["b", "l", "a", "h"]}.
+
+\begin{pecan}
+split sep str
+\end{pecan}
+
+\begin{pecan}
+cons head tail
+\end{pecan}
+
+Constructs a list starting with \pecaninline{head} and ending with \pecaninline{tail}.
+
+\begin{pecan}
+compare a b
+\end{pecan}
+
+Compares \pecaninline{a} and \pecaninline{b} if they are of the same type, giving an error otherwise.
+If \pecaninline{a < b}, then returns -1; if \pecaninline{a = b}, then returns 0; if \pecaninline{a > b}, returns 1.
+
+\begin{pecan}
+mkAutomaton inputNames inputBases
+\end{pecan}
+
+Creates a new automaton, in the internal Praline format, with the given list of \pecaninline{inputNames} and \pecaninline{inputBases}.
+If \pecaninline{inputNames = [x1,x2,...,xn]} and \pecaninline{inputBases = [b1,b2,...,bn]}, then input \pecaninline{xi} will be in base \pecaninline{bi}.
+
+Note that to use this automaton, you will need to call \pecaninline{buidlAut} to convert it into a Spot automaton.
+This is due to Spot only working with binary encoded inputs.
+Pecan/Praline, however, support any integer base, so the automaton will be automatically encoded for you.
+Unfortunately, this does mean that an encoding step is necessary.
+
+\begin{pecan}
+addState aut stateLabel isAccepting
+\end{pecan}
+
+\begin{pecan}
+addTransition aut src dst syms
+\end{pecan}
+
+\begin{pecan}
+buildAut aut
+\end{pecan}
+
+Converts \pecaninline{aut} from the internal Praline implementation into a Spot automaton.
+See \pecaninline{mkAutomaton} for an explanation of why this is necessary.
+
+\begin{pecan}
+autToStr aut
+\end{pecan}
+
+Converts a Spot automaton to a string in the HOA format.
+
+\begin{pecan}
+writeFile path contents
+\end{pecan}
+
+Write the string \pecaninline{contents} to the file at the location \pecaninline{path}.
+Will create the file if it does not exist, but not the intermediate directories.
+
+\begin{pecan}
+readFile path
+\end{pecan}
+
+Returns a string containing the contents of the file at the location \pecaninline{path}.
+
+\begin{pecan}
+deleteFile path
+\end{pecan} 
+
+Deletes the file at the location \pecaninline{path}.
