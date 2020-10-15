@@ -28,8 +28,8 @@ The sequences $p$ and $q$ are given by the following recursive definition.
 
 \begin{equation}\label{eqn:conv-def}
 \begin{split}
-    p_{-2} = 0, \quad p_{-1} = 1, \quad p_n = a_n p_{n-1} + p_{n-2} \quad \text{for} \quad n > 0\\
-    q_{-2} = 1, \quad q_{-1} = 0, \quad q_n = a_n q_{n-1} + q_{n-2} \quad \text{for} \quad n > 0
+    p_{-2} = 0, \quad p_{-1} = 1, \quad p_n = a_n p_{n-1} + p_{n-2} \quad \text{for} \quad n \geq 0\\
+    q_{-2} = 1, \quad q_{-1} = 0, \quad q_n = a_n q_{n-1} + q_{n-2} \quad \text{for} \quad n \geq 0
 \end{split}
 \end{equation}
 
@@ -194,8 +194,6 @@ Using the basic definitions above, we can encode the following useful predicates
 
 \subsubsection{Proofs of Correctness}
 
-\reed{Lots of these come from Luke's walnut code. Is there something we can cite, or should we include him as an author or something?}
-
 Using Pecan, we can prove that the automata we have created are correct in a number of ways, by checking basic properties of addition and the natural numbers.
 
 Because we have defined the successor of $x$ without reference to the addition automaton, we can use it to check the correctness of addition.
@@ -227,9 +225,7 @@ We also verify that every natural number has a unique successor in each Ostrowsk
 We also prove some properties about the relationship between \pecaninline{bco_leq} and \pecaninline{bco_adder}.
 \begin{pecan}
 Theorem ("Every valid Ostrowski-a representation has a successor.", {
-    forall a, x. 
-    if bco_valid(a, x) then 
-        exists u. bco_succ(a,x,u)
+    foralla,x. if bco_valid(a,x) then existsu. bco_succ(a,x,u)
 }).
 
 Theorem ("All natural numbers other than 0 have a predecessor.", {
@@ -250,8 +246,6 @@ Theorem ("If x <= y, then there is some z so that x + z = y.", {
         (bco_leq(x,y) <=> exists z. bco_adder(a,x,z,y))
 }).
 \end{pecan}
-
-\reed{How many of these are interesting enough to include here}
 
 There are many other simple correctness properties we check, such as $\leq$ being a total order, which can be found in our project repository at \url{https://github.com/ReedOei/SturmianWords}.
 
@@ -585,60 +579,58 @@ Finally, Pecan proves the following in \pecaninline{0.17} seconds.
     \]
 \end{proof}
 
-We can bound the possible lengths of antisquares and antipalindromes using the continued fraction's convergents.
-We define $A_O : (0,1) \to \N$ such that $A_O(\alpha)$ is the maximum order of any antisquare in $C_{\alpha}$; we also define $A_L : (0,1) \to \N$ such that $A_L(\alpha)$ is the maximum length of any antisquare in $C_{\alpha}$.
-Note that $A_L(\alpha) = 2A_O(\alpha)$.
+% We can bound the possible lengths of antisquares and antipalindromes using the continued fraction's convergents.
+% We define $A_O : (0,1) \to \N$ such that $A_O(\alpha)$ is the maximum order of any antisquare in $C_{\alpha}$; we also define $A_L : (0,1) \to \N$ such that $A_L(\alpha)$ is the maximum length of any antisquare in $C_{\alpha}$.
+% Note that $A_L(\alpha) = 2A_O(\alpha)$.
 
-Similarly, define $A_P : (0, 1) \to \N$ such that $A_P(\alpha)$ is the maximum length of any antipalindrome in $C_{\alpha}$.
+% Similarly, define $A_P : (0, 1) \to \N$ such that $A_P(\alpha)$ is the maximum length of any antipalindrome in $C_{\alpha}$.
 
-\begin{theorem}
-    For every $\alpha = [a_0, a_1, a_2, \ldots] \in (0,1)$, the following are true:
-    \begin{enumerate}[label=(\roman*)]
-        \item $A_O(\alpha) \leq a_3 q_3 + a_1 q_1$
-        \item $A_P(\alpha) \leq a_3 q_3 + a_1 q_1$ 
-        \item $A_L(\alpha) \leq a_5 q_5 + a_3 q_3 + a_1 q_1$
-        \item $A_O(\alpha) \leq A_P(\alpha) \leq A_L(\alpha) = 2A_O(\alpha)$
-    \end{enumerate}
+% \begin{theorem}
+%     For every $\alpha = [a_0, a_1, a_2, \ldots] \in (0,1)$, the following are true:
+%     \begin{enumerate}[label=(\roman*)]
+%         \item $A_O(\alpha) \leq a_3 q_3 + a_1 q_1$
+%         \item $A_P(\alpha) \leq a_3 q_3 + a_1 q_1$ 
+%         \item $A_L(\alpha) \leq a_5 q_5 + a_3 q_3 + a_1 q_1$
+%         \item $A_O(\alpha) \leq A_P(\alpha) \leq A_L(\alpha) = 2A_O(\alpha)$
+%     \end{enumerate}
     
-    That is, the longest antipalindrome in $C_{\alpha}$ is at least as long as the largest order of an antisquare in $C_{\alpha}$, but it is shorter than the longest antisquare.
-    Additionally, there are $\alpha, \beta \in (0, 1)$ for which the equality is achieved; that is, there is are $\alpha, \beta \in (0, 1)$ such that $A_O(\alpha) = A_P(\alpha)$ and $A_P(\beta) = A_L(\beta)$.
+%     That is, the longest antipalindrome in $C_{\alpha}$ is at least as long as the largest order of an antisquare in $C_{\alpha}$, but it is shorter than the longest antisquare.
+%     Additionally, there are $\alpha, \beta \in (0, 1)$ for which the equality is achieved; that is, there is are $\alpha, \beta \in (0, 1)$ such that $A_O(\alpha) = A_P(\alpha)$ and $A_P(\beta) = A_L(\beta)$.
+% \end{theorem}
+% \begin{proof}
+%     Using Pecan, we create automata which compute $A_O$, $A_P$, and $A_L$:
+%     \begin{align*}
+%         A_O(\alpha, n) &:= \texttt{has\_antisquare}(\alpha, n) \land \forall m. \texttt{has\_antisquare}(\alpha, m) \implies m \leq n \\
+%         A_P(\alpha, n) &:= \texttt{has\_antipalindrome}(\alpha, n) \land \forall m. \texttt{has\_antipalindrome}(\alpha, m) \implies m \leq n \\
+%         A_L(\alpha, n) &:= \texttt{has\_antisquare\_len}(\alpha, n) \land \forall m. \texttt{has\_antisquare\_len}(\alpha, m) \implies m \leq n
+%     \end{align*}
+%     % This is probably obvious
+%     % where $\texttt{has\_antisquare}(a, n)$ holds when $C_{a}$ has an antisquare of order $n$, $\texttt{has\_palindrome}(a, n)$ holds when $C_{a}$ has an antipalindrome of length $n$, and $\texttt{has\_antisquare\_len}(a, n)$ holds when $C_{a}$ has an antisquare of length $n$.
+%     We then verify some basic correctness properties:
+%     \begin{itemize}
+%         \item Each of these relations is a function, which justifies using Pecan's functional expression notation (e.g., $A_L(\alpha) = 2A_O(\alpha)$ instead of $A_L(\alpha, 2n) \land A_O(\alpha, n)$).
+%         \item $A_L(\alpha) = 2A_O(\alpha)$
+%         \item $A_O(\alpha) \geq 1$, $A_L(\alpha) \geq 2$, and $A_P(\alpha) \geq 2$; because every Sturmian word must contain $01$ which is both an antisquare and an antipalindrome.
+%     \end{itemize}
     
-    \reed{this theorem makes the previous two about there being finitely many of each easy corollaries, so we could omit them if we choose/need space}
-\end{theorem}
-\begin{proof}
-    Using Pecan, we create automata which compute $A_O$, $A_P$, and $A_L$:
-    \begin{align*}
-        A_O(\alpha, n) &:= \texttt{has\_antisquare}(\alpha, n) \land \forall m. \texttt{has\_antisquare}(\alpha, m) \implies m \leq n \\
-        A_P(\alpha, n) &:= \texttt{has\_antipalindrome}(\alpha, n) \land \forall m. \texttt{has\_antipalindrome}(\alpha, m) \implies m \leq n \\
-        A_L(\alpha, n) &:= \texttt{has\_antisquare\_len}(\alpha, n) \land \forall m. \texttt{has\_antisquare\_len}(\alpha, m) \implies m \leq n
-    \end{align*}
-    % This is probably obvious
-    % where $\texttt{has\_antisquare}(a, n)$ holds when $C_{a}$ has an antisquare of order $n$, $\texttt{has\_palindrome}(a, n)$ holds when $C_{a}$ has an antipalindrome of length $n$, and $\texttt{has\_antisquare\_len}(a, n)$ holds when $C_{a}$ has an antisquare of length $n$.
-    We then verify some basic correctness properties:
-    \begin{itemize}
-        \item Each of these relations is a function, which justifies using Pecan's functional expression notation (e.g., $A_L(\alpha) = 2A_O(\alpha)$ instead of $A_L(\alpha, 2n) \land A_O(\alpha, n)$).
-        \item $A_L(\alpha) = 2A_O(\alpha)$
-        \item $A_O(\alpha) \geq 1$, $A_L(\alpha) \geq 2$, and $A_P(\alpha) \geq 2$; because every Sturmian word must contain $01$ which is both an antisquare and an antipalindrome.
-    \end{itemize}
+%     We use Praline to build automata recognizing Ostrowski-$\alpha$ representations of at most $4$ and $6$ nonzero digits, called $\texttt{is\_4\_digits}(n)$ and $\texttt{is\_6\_digits}(n)$.
+%     The we use Pecan to prove all the parts of the theorem:
+%     \begin{align*}
+%         \forall \alpha. & \texttt{is\_4\_digits}(A_O(\alpha)) \land \texttt{is\_4\_digits}(A_P(\alpha)) \land \texttt{is\_6\_digits}(A_L(\alpha)) \land \\
+%                         & A_O(\alpha) \leq A_P(\alpha) \leq A_L(\alpha)
+%     \end{align*}
+%     We also use Pecan to find examples of the equality: when $\alpha = [0,3,3,\overline{1}]$, we have $A_O(\alpha) = A_P(\alpha) = 2$, and when $\alpha = [0,4,2,\overline{1}]$, we have $A_P(\alpha) = A_L(\alpha) = 2$.
     
-    We use Praline to build automata recognizing Ostrowski-$\alpha$ representations of at most $4$ and $6$ nonzero digits, called $\texttt{is\_4\_digits}(n)$ and $\texttt{is\_6\_digits}(n)$.
-    The we use Pecan to prove all the parts of the theorem:
-    \begin{align*}
-        \forall \alpha. & \texttt{is\_4\_digits}(A_O(\alpha)) \land \texttt{is\_4\_digits}(A_P(\alpha)) \land \texttt{is\_6\_digits}(A_L(\alpha)) \land \\
-                        & A_O(\alpha) \leq A_P(\alpha) \leq A_L(\alpha)
-    \end{align*}
-    We also use Pecan to find examples of the equality: when $\alpha = [0,3,3,\overline{1}]$, we have $A_O(\alpha) = A_P(\alpha) = 2$, and when $\alpha = [0,4,2,\overline{1}]$, we have $A_P(\alpha) = A_L(\alpha) = 2$.
+%     The total time for the proof, including the correctness properties is \pecaninline{4.16} seconds.
     
-    The total time for the proof, including the correctness properties is \pecaninline{4.16} seconds.
-    
-    Finally, for parts (1)-(3) of the theorem, note that we have proven:
-    \begin{enumerate}
-        \item $|\mathcal{O}_{\alpha}(A_O(\alpha))| \leq 4$
-        \item $|\mathcal{O}_{\alpha}(A_P(\alpha))| \leq 4$ 
-        \item $|\mathcal{O}_{\alpha}(A_L(\alpha))| \leq 6$
-    \end{enumerate}
-    But this implies that $A_O(\alpha) \leq a_3 q_3 + a_1 q_1$, and similarly for the others, because the largest length-$4$ Ostrowski-$\alpha$ representation is the representation of $a_3 q_3 + a_1 q_1$.
-\end{proof}
+%     Finally, for parts (1)-(3) of the theorem, note that we have proven:
+%     \begin{enumerate}
+%         \item $|\mathcal{O}_{\alpha}(A_O(\alpha))| \leq 4$
+%         \item $|\mathcal{O}_{\alpha}(A_P(\alpha))| \leq 4$ 
+%         \item $|\mathcal{O}_{\alpha}(A_L(\alpha))| \leq 6$
+%     \end{enumerate}
+%     But this implies that $A_O(\alpha) \leq a_3 q_3 + a_1 q_1$, and similarly for the others, because the largest length-$4$ Ostrowski-$\alpha$ representation is the representation of $a_3 q_3 + a_1 q_1$.
+% \end{proof}
 
 \subsubsection{Special Factors}
 
@@ -686,47 +678,43 @@ Similarly, define $A_P : (0, 1) \to \N$ such that $A_P(\alpha)$ is the maximum l
     \reed{Finish this}
 \end{proof}
 
-\subsubsection{Periods}
+% \subsubsection{Least Periods}
 
-\begin{theorem}\label{thm:lesat-period-semiconvergent}
-    If $p$ is the least period of a factor of $C_{\alpha}$, then $p$ is the denominator of a semiconvergent of $\alpha$; i.e., $p = q_{n,\ell}$ for some $n$ and $\ell$.
-\end{theorem}
-\begin{proof}
-\reed{least period takes 5016.77 seconds to build given the period automaton.}
-\end{proof}
+% \begin{theorem}\label{thm:least-period-semiconvergent}
+%     If $p$ is the least period of a factor of $C_{\alpha}$, then $p$ is the denominator of a semiconvergent of $\alpha$; i.e., $p = q_{n,\ell}$ for some $n$ and $\ell$.
+% \end{theorem}
+% \begin{proof}
+% \reed{least period takes 5016.77 seconds to build given the period automaton.}
+% \end{proof}
 
 \subsubsection{Unbordered Factors}
 
-\begin{definition}
-    A word $w$ is called \term{unbordered} if the least period of $w$ is $|w|$.
-\end{definition}
+% \begin{definition}
+%     A word $w$ is called \term{unbordered} if the least period of $w$ is $|w|$.
+% \end{definition}
 
 \reed{Still need to do the thing with the unbordered factors reversed/how many of them there are}
 
 \reed{Maybe there's some relation between palindromes and unbordered factors because there's exactly two or each for each odd $n$ (or even i don't remember right now). Well, maybe not; palindromes are like, super bordered factors; unbordered factors are more like antipalindromes but somewhat less extreme. }
 
-We recover Lemma 8 of~\cite{Currie2009LeastPO}.
-\begin{theorem}
-    The least period of $C_{\alpha}[i..j]$ is the length of the longest unbordered factor of $C_{\alpha}[i..j]$.
-\end{theorem}
-\begin{proof}
-We have previously defined least periods, so we can easily define unbordered factors; similarly, it is straight to define unbordered subfactors:
-\begin{align*}
-    \texttt{unbordered}(\alpha,i,j) &:= \texttt{least\_period}(\alpha,j - i, i, j) \\
-    \texttt{unbordered\_factor}(\alpha,i,j,k,\ell) &:= i \leq j \land \ell \leq j \land \texttt{unbordered}(\alpha,k,\ell) 
-\end{align*}
+% We recover Lemma 8 of~\cite{Currie2009LeastPO}.
+% \begin{theorem}
+%     The least period of $C_{\alpha}[i..j]$ is the length of the longest unbordered factor of $C_{\alpha}[i..j]$.
+% \end{theorem}
+% \begin{proof}
+% We have previously defined least periods, so we can easily define unbordered factors; similarly, it is straight to define unbordered subfactors:
+% \begin{align*}
+%     \texttt{unbordered}(\alpha,i,j) &:= \texttt{least\_period}(\alpha,j - i, i, j) \\
+%     \texttt{unbordered\_factor}(\alpha,i,j,k,\ell) &:= i \leq j \land \ell \leq j \land \texttt{unbordered}(\alpha,k,\ell) 
+% \end{align*}
 
-Then the theorem we wish to prove is
-\[
-    \forall \alpha. \forall i > 0, j > 0, p > 0.
-        \texttt{least\_period}(\alpha,p,i,j) \iff p = \max \{ m : \exists k. \texttt{unbordered\_factor}(\alpha,i,j,k,k+m)\}
-\]
+% Then the theorem we wish to prove is
+% \[
+%     \forall \alpha. \forall i > 0, j > 0, p > 0.
+%         \texttt{least\_period}(\alpha,p,i,j) \iff p = \max \{ m : \exists k. \texttt{unbordered\_factor}(\alpha,i,j,k,k+m)\}
+% \]
 
-Pecan confirms the theorem is true.
-\end{proof}
+% Pecan confirms the theorem is true.
+% \end{proof}
 
-Note that from this theorem and Theorem~\ref{thm:least-period-semiconvergent}, it follows that the lengths of unbordered factors are also denominators of the semiconvergents of $\alpha$.
-
-\reed{TODO: Add the new theorem we proved from https://arxiv.org/abs/2005.11718}
-
-\subsection{Discussion}
+% Note that from this theorem and Theorem~\ref{thm:least-period-semiconvergent}, it follows that the lengths of unbordered factors are also denominators of the semiconvergents of $\alpha$.
