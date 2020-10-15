@@ -106,51 +106,12 @@ A word $x \in \Sigma^\omega$ has type \texttt{binary} if $x \in \{ w \in \Sigma^
 Equivalently, we can define $\texttt{binary}$ as the words satisfying the LTL formula $F(G(\neg x))$.
 \end{example}
 
-Users can define their own \textbf{structures} on a type so that names can be overloaded: for example, this allows users to define their own numeration systems.
-
-\begin{lstlisting}[language=pecan, basicstyle=\normalsize\ttfamily, mathescape=true, frame=single]
-#type(binary, {
-    "adder": bin_add(any, any, any),
-    "less": bin_less(any, any) 
-})
-\end{lstlisting}
-
 Pecan is capable of proving any statement expressed solely in terms of B\"uchi automata and first order logic connectives, such as $\wedge$, $\vee$, $\neg$, $\forall$, and $\exists$.
 In particular, it is powerful enough to decide any statement in Presburger arithmetic (and its natural extension to $\mathbb{Z}$ or $\mathbb{R}$), the first order theory of the natural numbers with addition (but \emph{not} multiplication) and comparison ($<$).
 
 \section{Results}
 
 Our main result is the creation of Pecan; this section serves as a demonstration of some of the theorems that Pecan is capable of proving.
-
-\subsection{Example: The Chicken McNugget Problem }
-
-In the 1980s, Henri Picciotto asked the following problem in his algebra textbook:
-
-\begin{quote}
-    What is the greatest number of chicken nuggets that cannot be ordered using only boxes of 6, 9, and 20?
-\end{quote}
-
-We call all such numbers \textbf{non-purchasable}, and we can define them in Pecan as follows:
-
-\begin{lstlisting}[language=pecan, basicstyle=\normalsize\ttfamily, mathescape=true, frame=single]
-n,m,a,b,c $\color{red} \in$ binary
-purchasable(n) := n $\color{red} \in$ binary $\color{red} \wedge$ $\exists$a. $\exists$b. $\exists$c. n =$\ $6*a $\color{red} +$ 9*b $\color{red} +$ 20*c
-non_purchasable(n) := n $\color{red} \in$ binary $\color{red} \wedge$ $\color{red} \neg$purchasable(n)
-\end{lstlisting}
-
-We can then define the largest non-purchasable number naturally as:
-\begin{lstlisting}[language=pecan, basicstyle=\normalsize\ttfamily, mathescape=true, frame=single]
-largest(n) := non_purchasable(n) $\color{red} \wedge$ $\forall$m $\color{red} \in$ non_purchasable. n $\color{red} \geq$ m
-\end{lstlisting}
-
-Pecan produces the automaton in Figure~\ref{fig:largest_non_purchasable} for us, which tells us that the largest non-purchasable number is $101011_2$, or $43$ in base 10.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{images/largest_not_purchasable.pdf}
-    \caption{A B\"uchi automaton accepting $110101$ in least significant digit first representation.}
-    \label{fig:largest_non_purchasable}
-\end{figure}
 
 \subsection*{Example: Properties of the Thue-Morse Word}
 
