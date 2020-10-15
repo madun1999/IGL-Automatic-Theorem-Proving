@@ -1,0 +1,47 @@
+<svg height="125pt" viewBox="0.00 0.00 173.00 124.80" width="173pt" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g class="graph" id="graph0" transform="scale(1.0 1.0) rotate(0) translate(4 120.8)">
+<polygon fill="#ffffff" points="-4,4 -4,-120.8 169,-120.8 169,4 -4,4" stroke="transparent"/>
+<text fill="#000000" font-family="Lato" font-size="14.00" text-anchor="start" x="59.5" y="-86.6">[Büchi]</text>
+<!-- I -->
+<!-- 0 -->
+<g class="node" id="node2">
+<title>0</title>
+<ellipse cx="56" cy="-22" fill="#ffffaa" rx="18" ry="18" stroke="#000000"/>
+<text fill="#000000" font-family="Lato" font-size="14.00" text-anchor="middle" x="56" y="-18.3">0</text>
+</g>
+<!-- I&#45;&gt;0 -->
+<g class="edge" id="edge1">
+<title>I-&gt;0</title>
+<path d="M1.1233,-22C4.178,-22 17.9448,-22 30.9241,-22" fill="none" stroke="#000000"/>
+<polygon fill="#000000" points="37.9807,-22 30.9808,-25.1501 34.4807,-22 30.9807,-22.0001 30.9807,-22.0001 30.9807,-22.0001 34.4807,-22 30.9807,-18.8501 37.9807,-22 37.9807,-22" stroke="#000000"/>
+</g>
+<!-- 0&#45;&gt;0 -->
+<g class="edge" id="edge2">
+<title>0-&gt;0</title>
+<path d="M49.6208,-39.0373C48.3189,-48.8579 50.4453,-58 56,-58 60.166,-58 62.4036,-52.8576 62.7128,-46.1433" fill="none" stroke="#000000"/>
+<polygon fill="#000000" points="62.3792,-39.0373 65.8541,-45.8818 62.5434,-42.5335 62.7076,-46.0296 62.7076,-46.0296 62.7076,-46.0296 62.5434,-42.5335 59.561,-46.1774 62.3792,-39.0373 62.3792,-39.0373" stroke="#000000"/>
+<text fill="#000000" font-family="Lato" font-size="14.00" text-anchor="start" x="51.5" y="-61.8">1</text>
+</g>
+<!-- 1 -->
+<g class="node" id="node3">
+<title>1</title>
+<ellipse cx="143" cy="-22" fill="#ffffaa" rx="18" ry="18" stroke="#000000"/>
+<ellipse cx="143" cy="-22" fill="none" rx="22" ry="22" stroke="#000000"/>
+<text fill="#000000" font-family="Lato" font-size="14.00" text-anchor="start" x="138.5" y="-18.3">1</text>
+</g>
+<!-- 0&#45;&gt;1 -->
+<g class="edge" id="edge3">
+<title>0-&gt;1</title>
+<path d="M74.0265,-22C85.5329,-22 100.711,-22 113.8988,-22" fill="none" stroke="#000000"/>
+<polygon fill="#000000" points="120.9847,-22 113.9848,-25.1501 117.4847,-22 113.9847,-22.0001 113.9847,-22.0001 113.9847,-22.0001 117.4847,-22 113.9847,-18.8501 120.9847,-22 120.9847,-22" stroke="#000000"/>
+<text fill="#000000" font-family="Lato" font-size="14.00" text-anchor="start" x="92" y="-25.8">!x</text>
+</g>
+<!-- 1&#45;&gt;1 -->
+<g class="edge" id="edge4">
+<title>1-&gt;1</title>
+<path d="M134.9937,-42.5808C133.8859,-52.8447 136.5547,-62 143,-62 147.834,-62 150.5437,-56.8502 151.129,-49.9451" fill="none" stroke="#000000"/>
+<polygon fill="#000000" points="151.0063,-42.5808 154.2726,-49.5273 151.0647,-46.0803 151.123,-49.5798 151.123,-49.5798 151.123,-49.5798 151.0647,-46.0803 147.9735,-49.6324 151.0063,-42.5808 151.0063,-42.5808" stroke="#000000"/>
+<text fill="#000000" font-family="Lato" font-size="14.00" text-anchor="start" x="137.5" y="-65.8">!x</text>
+</g>
+</g>
+</svg>
