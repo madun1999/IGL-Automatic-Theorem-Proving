@@ -1,0 +1,236 @@
+\documentclass[10pt,usenames,dvipsnames]{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{mathtools}
+\usepackage{enumerate}
+\usepackage[margin=1.25in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{kpfonts}
+\usepackage{subfigure}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[final]{pdfpages}
+
+\input{Pecan/macros.tex}
+\input{Pecan/pecan-lang.tex}
+
+\usepackage[
+backend=biber,
+style=numeric,
+sorting=ynt
+]{biblatex}
+
+\addbibresource{biblio.bib}
+
+\title{Pecan: A Theorem Prover}
+
+\author{%
+IGL Scholars: Zhengyao Lin, Eric Ma, Reed Oei, Yikai Teng, Pavle Vuksanovic \\
+Graduate Mentor: Christian Schulz, Mary-Angelica Tursi \\
+Faculty Advisor: Philipp Hieronymi%
+}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+An \emph{automated theorem prover} is a program capable of proving or disproving mathematical statements with no human guidance. 
+An \emph{automatic sequence} is a sequence that can be defined by some (typically finite) automaton.
+Automated theorem provers and automatic sequences have diverse applications: in computer science, they are used for program verification, in mathematics, they have found uses in logic, number theory, combinatorics, and there are even applications of automatic sequences to theoretical physics~\cite{auto_seq}.
+
+\textbf{Pecan} is a system for automated theorem proving that represents logical predicates using B\"uchi automata.
+In particular, Pecan was originally developed for proving theorems about a special class of automatic sequence, called \emph{Sturmian words}.
+Pecan is inspired by another theorem prover, called Walnut~\cite{walnut} in the same area.
+However, Walnut only allows finite automaton, limiting the statements it can handle.
+
+Pecan is capable of proving any statement expressed solely in terms of B\"uchi automata and first order logic connectives, such as $\wedge$, $\vee$, $\neg$, $\forall$, and $\exists$.
+In the past, we have used Pecan to automatically prove many statements about Sturmian words, and now we focus on applications of Pecan to other problems.
+In particular, we can use Pecan to work with constraint problems involving not only integers or rational numbers, but also any \emph{quadratic irrational} (a root of a quadratic polynomial with integer coefficients), and we can also use Pecan to visualize fractals defined by automata.
+
+\section{Background}
+
+A \emph{finite automaton} is a ``machine'' that operates on \emph{finite words}, or string of letters, such as ``abc.''
+Each word is either \emph{accepted} or \emph{rejected}: the set of all words an automaton accepts is its \emph{language}.
+They can be represented as a \emph{finite} collection of \emph{states} and \emph{transitions}.
+
+Automata have nice closure properties~\cite{aut_theory}: we can combine them using first-order logic operations.
+Therefore, there is an algorithm that can decide any statement expressed solely in terms of first order logic operations and properties defined by finite automata.
+It is possible to express many predicates using only finite automata, such as: equality of numbers, $x < y$ when $x$ and $y$ are expressed in binary (or any other fixed base), and $x + y = z$, again in any fixed base.
+Together, this let's us use automata to decide statements in Presburger arithmetic (essentially, arithmetic on natural numbers with only addition and inequalities).
+
+However, we can also express other, more complicated predicates, such as defining automatic sequences.
+An \emph{automatic sequence} is a sequence $a_0 a_1 a_2 \cdots$ such that there is some automaton $\cal A$ such that $a_i = 1$ if and only if $\cal A$ accepts $i$ written in some numeration system (e.g., binary).
+Using this automaton, we can define, for example, when a \emph{subword} $a_i a_{i+1} \cdots a_{i+n}$ of an automatic sequence is a palindrome, as follows:
+\[
+    \forall 0 \leq k \leq n. \mathcal{A}(i + k) = \mathcal{A}(i + n - k)
+\]
+Using such definitions and the closure properties of automata, we can express, and prove, many interesting theorems about automatic sequences, and other structures.
+
+\textbf{B\"uchi Automata} are an extension of finite automata to infinite inputs; they accept words that visit an accepting state infinitely often \cite{aut_theory}. 
+Some problems can only be expressed with B\"uchi automata, such as those involving real numbers, which are themselves infinite strings.
+
+\section{Pecan}
+
+Pecan, and a more comprehensive manual, can be found online at our repository~\url{https://github.com/ReedOei/Pecan}.
+Pecan programs are made up of \textbf{predicates} and \textbf{directives}.
+
+\begin{itemize}
+    \item predicates: defined either by loading automata defined in files, translating LTL (linear temporal logic) formulas into B\"uchi automata, or some combination of these using first order logic and equality.
+
+\begin{pecan}
+Let x,y,z be nat.
+successor(x,y) := x < y & forallz. z <= x | z >= y
+\end{pecan}
+
+    \item directives: commands to the Pecan interpreter, such as: \pecaninline{Theorem}, which asks Pecan to prove a theorem
+    
+\begin{pecan}
+Theorem ("Addition is associative", { forallx,y,z. x+(y+z) = (x+y)+z }).
+\end{pecan}
+
+\end{itemize}
+
+The basic datatype, or universal set, in Pecan is the infinite binary word---elements of $\Sigma^{\omega}$ where $\Sigma = \{0,1\}$.
+All types are \emph{refinement types}: they are defined as a subset of $\Sigma^{\omega}$ satisfying some predicate defined in terms of B\"uchi automata.
+\begin{example}
+A word $x \in \Sigma^\omega$ has type \texttt{binary} if $x \in \{ w \in \Sigma^* : x = w0^\omega \}$---that is, words that are eventually $0$.
+Equivalently, we can define $\texttt{binary}$ as the words satisfying the LTL formula $\lozenge \square \neg x$.
+\end{example}
+
+\section{Results}
+
+\subsection{Recognizing Multiplication by $\alpha$}
+The repeated fraction expansion of a number $\alpha$ lends itself to the representation of non-negative integers in the form the \textbf{Ostrowski-$\alpha$ numeration system}. From previous semesters, automata which recognize addition and the ordering of Ostrowski numbers have been implemented into Pecan, however multiplication by integer, fractional, and irrational values has not.
+
+\begin{definition}
+Let $\alpha \in \R$, then, for $n \in \mathbb N$, $\rho_{\alpha} (n)$ is a string encoding the $\alpha$-Ostrowski representation of $n$ using $\Sigma = \{0,1,2\}$ of binary numbers separated by $2$s.
+\end{definition}
+
+\begin{definition}
+Call $X \subseteq \mathbb N ^ r$ $\alpha$-recognizable if there exists a finite automata whose language is $\rho_{\alpha} (X)$. % (just a mapping of the function to all elements of every tuple in the set).
+\end{definition}
+
+\begin{theorem} [Hieronymi et al.~\cite{presb-arit}]
+There exist two functions $g_{\alpha}: \mathbb N \to \mathbb N$ and $f_{\alpha}: \mathbb N \to \mathbb R$ such that for $X \in \mathbb N$
+$$\alpha N = f_{\alpha} (N) + g_{\alpha} (N)$$
+where the sets $\{ (a,b) \in \mathbb N^2 \mid f_{\alpha}(a) < f_{\alpha}(b) \}$ and $\{ (a,b) \in \N^2 \mid g_{\alpha} (a) = b \}$ are $\alpha$-recognizable. Further, 
+$$\{ (a,b,c,d) \mid a + \alpha b < c + \alpha d \}$$
+is also $\alpha$-recognizable using the above functions.
+\end{theorem}
+
+Since these sets are $\alpha$-recognizable, we are able to define them in Pecan, which has been an ongoing process. We have implemented the recognition of $g_\alpha$, $f_\alpha$, and $<$ for monic polynomials in $\alpha$ and are now working on optimizing these automata to achieve the running times as theorized by Hieronymi et al.~\cite{presb-arit} in practice. We are also working on building automata which as efficiently as possible recognize multiplication by a natural number for a given Ostrowski-$\alpha$ representation.
+
+\subsection{Fractals}
+% Plan
+% \begin{enumerate}
+%     \item An analogue of Cobham's theorem for fractals
+%         \begin{itemize}
+%             \item Self similarity: definition 1.1, 1.2
+%             \item k-automatic: definition 2.1, 2.2
+%             \item k-automatic fractal: definition 2.5
+%             \item k-automatic fractal k-self-similar: proposition 2.12
+%         \end{itemize}
+%     \item
+% \end{enumerate}
+
+Below we will denote the alphabet $\Sigma_k := \{ 0, \dots, k - 1 \}$.
+
+\begin{definition}
+Given an $\omega$-word $w \in \Sigma^\omega_k$, define
+\[
+    [w]_k := \sum^\infty_{i = 0} w_i k^{-n - 1} \in [0, 1]
+\]
+For any $S \subseteq \Sigma^\omega_k$, we denote $[S]_k := \{\ [w]_k \in [0, 1] \mid w \in S\ \}$.
+Similarly for any $S \subseteq (\Sigma^\omega_k)^d$, we denote $[S]_k := \{\ ([w_1]_k, \dots, [w_d]_k) \in [0, 1]^d \mid (w_1, \dots, w_d) \in S\ \}$.
+% Note that this representation may not be unique, for example, when $k = 10$, $0.1 = 0.0\bar{9}$.
+% In this case, we use the latter infinite representation for a real number in $[0, 1]$.
+\end{definition}
+
+\begin{definition}
+A set $S \subseteq [0, 1]$ is \textbf{$k$-regular} if there is a B\"uchi automaton $A$ over
+the alphabet $\Sigma^d_k$ (that is, $A$ accepts $d$-tuples of $\omega$-words),
+such that $[L(A)]_k = S$.
+\end{definition}
+
+\begin{definition}
+A function $f: [0, 1]^d \to [0, 1]^s$ is \textbf{$k$-regular} if there is a B\"uchi automaton $A$
+over the alphabet $\Sigma^{d + s}_k$, such that $[L(A)]_k$ coincides with the graph of $f$.
+\end{definition}
+
+\begin{definition}
+A function $f: [0, 1]^d \to [0, 1]^s$ is \textbf{$(k, r)$-regular} if there is a B\"uchi automaton $A$
+over the alphabet $\Sigma^d_k \times \Sigma^s_r$, such that $[\pi_1(L(A))]_k \times [\pi_2(L(A))]_r = S$,
+where $\pi_1$ is the projection to the first $d$ components and $\pi_2$ is the projection to the
+last $s$ components. 
+\end{definition}
+
+\begin{definition}
+A compact topological space $X$ is said to be \textbf{self-similar} if exists a finite collection of non-surjective homeomorphism, $\mathcal{A}$, such that $\bigcup_{f\in\mathcal{A}}f(X) = X$.
+\end{definition}
+
+We added functionality in Pecan such that given an arbitrary B\"uchi automaton $A$,
+one can plot the set of length-$d$ prefixes of words in $L(A)$, for $d \ge 0$.
+This allows us to plot (an approximation to) any $k$-regular fractal and
+the graph of any $(k, r)$-regular function.
+
+Here are some examples:
+
+We started with the classic triadic Cantor set, which has the following automata. The image for Cantor set is given on the right:
+
+\begin{center}
+    \includegraphics[width=4cm]{FA20/images/fractals/cantor-automata.png}
+    \includegraphics[width=6cm]{FA20/images/fractals/cantor3.pdf}
+\end{center}
+
+With a very similar automata (only by changing the accepting words), we can get the Sierpinski Carpet, the Pascal's Triangle, and the Menger Sponge:
+
+\begin{center}
+    \includegraphics[width=6cm]{FA20/images/fractals/sierpinski-3-l5.pdf}
+    \includegraphics[width=6cm]{FA20/images/fractals/sierpinski-5-l3.pdf}\\
+    \includegraphics[width=6cm]{FA20/images/fractals/pascal2.pdf}
+    \includegraphics[width=6cm]{FA20/images/fractals/menger-3-l4.pdf}
+\end{center}
+
+If we denote the Cantor set as $C$, we can define a distance function $d:[0,1]\rightarrow [0,1/6]$ by $d(x) = d(x,C) = min_{y \in C}(x,y)$. This function can be represented by the following automata: 
+
+\begin{center}
+    \includegraphics[width=6cm]{FA20/images/fractals/cantord-automata.png}
+    \includegraphics[width=6cm,height=4cm]{FA20/images/fractals/cantord.pdf}
+\end{center}
+
+We can also use this function to draw space filling curves like the Hilbert Curve and the Peano Curve. By setting an addition time coordinate, we can think of the Hilbert Curve as a $(2,4)$ regular automata and the Peano Curve a $(3,9)$ regular automata, as follows:
+
+\begin{center}
+    \includegraphics[width=5cm]{FA20/images/fractals/hilbert-automata.png}
+    \includegraphics[width=6cm]{FA20/images/fractals/peano-automata.png}
+\end{center}
+
+With these automata, we get the following 3 dimensional plots for Hilbert curves (row 1) and Peano Curves (row 2):
+
+\begin{center}
+    \includegraphics[width=5cm]{FA20/images/fractals/hilbert-1.pdf}
+    \includegraphics[width=5cm]{FA20/images/fractals/hilbert-2.pdf}
+    \includegraphics[width=5cm]{FA20/images/fractals/hilbert-1.pdf}\\
+    \includegraphics[width=5cm]{FA20/images/fractals/peano-1.pdf}
+    \includegraphics[width=5cm]{FA20/images/fractals/peano-2.pdf}
+    \includegraphics[width=5cm]{FA20/images/fractals/peano-3.pdf}\\
+\end{center}
+
+This function should be able to visualize any regular automata. 
+We plan to try visualizing more complicated fractals, like Reverend Back's Abbey Floor.
+
+\section{Future Work}
+
+We plan to continue to develop Pecan.
+We plan to use Pecan to develop tools that allow working with constraint problems involving non-rational coefficients.
+We also plan to continue to develop tools for visualizing fractals, and explore potential applications of these tools.
+
+\printbibliography
+
+\end{document}
