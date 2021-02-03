@@ -1,0 +1,15 @@
+\section{Related Work}\label{sec:related-work}
+
+Walnut~\cite{walnut} is the main inspiration for Pecan.
+Walnut is a similar automata-based theorem prover for automatic sequences, but uses finite automata, rather than B\"uchi automata.
+This difference means that Walnut is unable to handle uncountable families of automatic sequences (or any uncountable domains), as Pecan is able to.
+Additionally, the Pecan language is more sophisticated and modern than that of Walnut, which is only able use a single numeration system at a time, has no concept of types outside of numeration systems, and has no meta-programming language like Praline available.
+
+Many other theorem proving exist, such as SMT solvers and proof assistants, like Coq or Isabelle~\cite{nipkow2002isabelle,the_coq_development_team_2020_3744225}.
+To our knowledge, no SMT solver supports reasoning about arbitrary automatic words as Pecan does.
+Systems like Coq or Isabelle have projects attempting to formalize some aspects of combinatorics on words and automatic sequences~\cite{hivert2018littlewoodrichardson,holub2020binary}.
+However, proofs written in these systems are mostly human written, with some help from heuristics or specialized solvers, rather than being fully automatic, as in Pecan.
+
+B\"uchi automata have also been used extensively in program verification in systems such as SPIN~\cite{gerard2003spin}.
+However, we are interested in proving mathematical results, rather than proofs about properties of programs.
+For this reason, we must allow unrestricted use of logical operations, such as negation, rather than restricting to more limited forms of expressing properties, such as linear temporal logic, which such systems tend to use for performance reasons.

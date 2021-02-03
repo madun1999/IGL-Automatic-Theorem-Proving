@@ -1,0 +1,31 @@
+\section{Introduction}
+
+\textbf{Pecan} is a system for \emph{automated theorem proving} originally designed to decide mathematical statements about families of infinite words, in particular about Sturmian words, and based on well-known decision procedures for B\"uchi automata due to B\"uchi \cite{Buechi}. Pecan is inspired by Walnut~\cite{walnut} by Mousavi, another automated theorem prover for deciding combinatorical properties of automatic words. \textbf{Automatic words} are sequences of terms characterized by finite automata. The main motivation to create this new tool is to decide whether a statement is true for every element of an infinite family of words rather than just determining the truth of the statement for a single given words. In such a situation not every word in this family of words is automatic, but the whole family can be recognized by an automaton.
+Since the infinite families of words we want to consider are often indexed by real numbers, it is convenient to work with B\"uchi automata instead of finite automata. The canonical example of such a automatic family of words are the \textbf{Sturmian words}, that is the family $(\mathbf{w}_{\alpha,\rho})$ of all words $w=(w_n)$ over the alphabet $\{0,1\}$ such that there is $\rho \in [ 0,1 )$, called the \emph{intercept}, and an irrational $\alpha \in (0,1)$, called the \emph{slope}, with
+\[
+w_{n}=\lfloor n\alpha +\rho\rfloor -\lfloor (n-1)\alpha +\rho\rfloor
+\]
+for all $n\in \N$. Using Pecan, we can automatically reprove classical and recent theorems about Sturmian words, like the fact that they are not periodic, within minutes, and even have been able to prove completely new mathematical theorems using this software. 
+
+The idea of using automata-based decision procedures to prove theorems in combinatorics on words has been championed by Jeffrey Shallit and successfully implemented in several papers of Shallit and his many co-authors (see Shallit \cite{Shallit-survey} for a survey and Baranwal, Schaeffer, Shallit \cite{BARANWAL2021} for implementations of decision procedure for individual Sturmian words). The development of Pecan is our contribution to this exciting research program. We leave the detailed discussion of the mathematical background such as why Sturmian words can represented using automata and which statements about Sturmian words can be proved using Pecan, to the upcoming paper \cite{DecStuWor}. Here we describe the implementation of Pecan and discuss its performance.
+
+% Pecan comes with \textbf{Praline}\footnote{Because it is syntactic \textbf{sugar} for Pecan.}, a scripting language designed to make working with Pecan more pleasant.
+% It provides the primary interface to the counterexample generation capabilities of Pecan, and also allows some degree of metaprogramming: for example, programmatically generating predicate definitions.
+
+\begin{subsection}{Related work} 
+Pecan improves on Walnut~\cite{walnut}, a similar automata-based theorem prover for automatic sequences, by using B\"uchi automata instead of finite automata.
+This difference enables Pecan to handle uncountable families of sequences, allowing us quantify over all Sturmian words. Additionally, the Pecan language is able to use multiple numeration systems at a time, has a concept of types outside of numeration systems, and has meta-programming language, Praline.
+
+Many other theorem provers exist, such as SMT solvers and proof assistants, like Coq~\cite{the_coq_development_team_2020_3744225} or Isabelle~\cite{nipkow2002isabelle}.
+To our knowledge, no SMT solver supports reasoning about Sturmian words.
+Systems like Coq or Isabelle have projects attempting to formalize some aspects of combinatorics on words and automatic sequences~\cite{hivert2018littlewoodrichardson,holub2020binary}.
+However, proofs in these systems are mostly human written, with some help from heuristics or specialized solvers, rather than being fully automatic, as in Pecan.
+
+B\"uchi automata have also been used extensively in program verification in systems such as SPIN~\cite{gerard2003spin}.
+However, we are interested in proving mathematical results, rather than proofs about properties of programs.
+For this reason, we must allow unrestricted use of logical operations, such as negation, rather than restricting to more limited forms of expressing properties, such as linear temporal logic, which such systems tend to use for performance reasons.
+
+\end{subsection}
+
+\begin{subsection}{Acknowledgements}
+Support for this project was provided by the Illinois Geometry Lab. This project was partially supported by NSF grant DMS-1654725. \end{subsection}

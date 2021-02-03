@@ -1,0 +1,12 @@
+\section{Conclusion and Future Work}\label{sec:conclusion}
+
+We presented Pecan, the first system, to our knowledge, implementing a general purpose decision procedure for B\"uchi-automatic sequences, and in particular, statements about Sturmian words.
+The system aims to be a convenient interface for specifying definitions and proving theorems about such sequences, with features such as custom numeration systems, enabled by the type system, and convenient syntax for indexing into automatic sequences.
+We provide a formal description of the system, then evaluate the performance of Pecan by building automata representing common definitions and proving theorems about Sturmian words.
+We show that Pecan has reasonable performance, despite the theoretical worst-case, indicating that the approach is practical.
+% We show that Pecan has reasonable performance, despite the theoretical running time of the decision procedure and the size of the intermediate automata, indicating that the approach is practical.
+
+In the future, we hope to expand the statements that Pecan is capable of handling, by integrating known extensions such as multiplication by quadratic irrationals, as described in~\cite{hieronymi2019presburger}.
+We also hope to continue using Pecan to prove theorems about Sturmian words, both to provide new proofs of old results, as well as proving more new results.
+It may also be interesting to support more expressive kinds of automata that still have the desired closure properties, such as ($\omega$-)operator precedence automata~\cite{panella2013operator}.
+We would also like to integrate Pecan into a general-purpose proof assistant, such as Isabelle or Lean~\cite{de2015lean}. %, so that it can be used an external solver.% to expand the fully automated proving capabilities of these systems.

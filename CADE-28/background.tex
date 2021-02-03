@@ -1,0 +1,45 @@
+\section{Background}\label{sec:background}
+
+This section contains an informal introduction to words, automata, and the notation that we use.
+For precise statements and proof, we refer the reader to Allouche and Shallit \cite{MR1997038} or Khoussainov and Nerode ~\cite{aut_theory}.
+
+Let $\Sigma^*$ denote the set of finite words on the alphabet $\Sigma$, let $\Sigma^+$ denote the set of nonempty finite words on the alphabet $\Sigma$, and let $\Sigma^\omega$ denote the set of $\omega$-words on the alphabet $\Sigma$.
+
+For a word $w$, let $w[i]$ denote the $i$-letter of $w$.
+Let $w(i,n)$ denote the length-$n$ factor of $w$ starting at $i$ and ending at $i + n - 1$, that is, $w[i \ldots i + n - 1] = w[i] w[i + 1] \cdots w[i + n - 1]$.
+Let $|w|$ denote the \term{length} of $w$.
+%Let $w^R$ denote the \term{reverse} of $w$, so if $w = w[1] w[2] \cdots w[n]$, then $w^R = w[n] w[n-1] \cdots w[1]$.
+%In a binary alphabet, $\Sigma = \{0,1\}$, for a symbol $x \in \Sigma$, let $\overline{x}$ denote the \term{complement} of $x$, so $\overline{0} = 1$ and $\overline{1} = 0$.
+%For a word $w$ over a binary alphabet, let $\overline{w}$ denote the \term{complement} of $w$, that is $\overline{w} = \overline{w[1]} \, \overline{w[2]} \cdots \overline{w[n]}$.
+%Let $w^n$ denote concatenating $w$ with itself $n$ times, i.e., $w^n = \overbrace{w \cdots w}^{n\text{ times}}$.
+
+\term{B\"uchi automata} are an extension of the standard finite automata to infinite inputs.
+A B\"uchi automata $\mathcal{A} = (Q, \Sigma, \delta, q_0, F)$ accepts an infinite word $w \in \Sigma^\omega$ if the run of the automaton on the word $w$ visits an accepting state (i.e., a state in $F$) infinitely many times.
+The set of words accepted by $\mathcal{A}$ is its \term{language}, $L(\mathcal{A})$.
+Notably, nondeterministic B\"uchi automata and \textbf{not} equivalent to deterministic B\"uchi automata, and many interesting properties are only expressible via nondeterministic B\"uchi automata.
+For that reason, we simply refer to nondeterministic B\"uchi automata as B\"uchi automata, without qualification.
+Additionally, when we say ``automata'' without qualification, we refer to B\"uchi automata.
+Importantly, the languages that B\"uchi automata define are closed under intersection, union, projection, and complementation, and emptiness checking is decidable.
+
+%\cite{BARANWAL2021}
+%Informally, a binary sequence $(a_n)_{n \in \N}$ is \term{automatic} if there is some automaton $\mathfrak{A}$ such that $a_n = 1$ if and only if $\rho(n) \in L(\mathfrak{A})$, where $\rho : \N \to \Sigma^*$ is a function mapping natural numbers to their representations in some numeration system. For example, $\rho$ might map natural numbers into their $k$-ary representations. In this case, we call the sequence $(a_n)_{n\in \N}$ $k$-automatic. 
+
+
+
+
+% Using B\"uchi automata has a number of advantages over finite automata:
+% \begin{itemize}
+%         \item Some problems are more naturally expressed with B\"uchi automata.
+%             For example, we think of numbers as having infinitely many leading/leading zeros; using B\"uchi automata, we can encode number so that they actually start with infinitely many zeros.
+%             While existential quantification for Pecan works the same regardless of input type, Walnut needs a special algorithm to handle these leading/tailing zeroes because it uses finite automata.
+            
+%         \item Some problems can \emph{only} be expressed with B\"uchi automata.
+%             For example, it is clearly impossible to encode real numbers as finite strings because there are uncountably many real numbers but only countably many finite strings (on a finite alphabet).
+%             However, using B\"uchi automata, we are able to automatically prove properties about real numbers.
+        
+%         \item We can still express properties about finite strings (e.g., by using some symbol as an ``end of input'').
+% \end{itemize}
+
+% There are also disadvantages to using B\"uchi automata: in particular, many of the algorithms implementing the various logical operations on B\"uchi automata are much slower than their finite automata counterparts.
+% For example, while complementing finite automata is simple, complementing B\"uchi automata requires exponential time.
+% In practice, however, we can often calculate complements, even of large automata, in reasonable amounts of time.

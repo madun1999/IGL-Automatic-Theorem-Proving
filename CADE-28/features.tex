@@ -1,0 +1,121 @@
+\section{Overview}\label{sec:features}
+
+For full documentation on the features of Pecan, see the more comprehensive manual available at our repository~\cite{pecan-repo}.
+
+% \paragraph{Functions}
+% This is already shown in the implementation section, no need to discuss here
+% Some predicates represent relations which are functions.
+% For readability, Pecan allows the use of \term{placeholders}, which allow specifying the output of a function-like predicate.
+% For example, if we have a predicate \pecaninline{bin\_add(x, y, z)} accepting triples such that $x + y = z$ for binary numbers $x$, $y$, and $z$, then \pecaninline{bin\_add(x, y, \_)} is equivalent to writing $x + y$.
+% So we could have written \pecaninline{bin\_add(x, y, \_) = z} instead of \pecaninline{bin\_add(x, y, z)}.
+% Such a formula will be translated into \pecaninline{existsv. bin_add(x, y, v) & v = z}.
+
+% Because the last argument to a function-like relation is typically the output argument, we can simply write \pecaninline{f(x)} to mean \pecaninline{f(x, \_)}.
+
+% \paragraph{Annotations}
+% Pecan supports \term{annotations}, which may \term{wrapped} around any formula.
+% They do \textbf{not} change the logical value of the automaton, but are instead used to tell Pecan how to evaluate a formula (e.g., when to simplify).
+% The most commonly used annotations are:
+% \begin{itemize}
+%     \item \pecaninline{@postprocess[FORMULA]}: Performs a variety of simplification steps on the automaton representing \pecaninline{PREDICATE}.
+%     \item \pecaninline{@no_simplify[FORMULA]}: Turns off simplification (on by default) for the formula and all its subformulas.
+% \end{itemize}
+
+\paragraph{Directives} are the interface to Pecan, instructing it to perform actions (e.g., prove a theorem).
+We discuss the most important: \pecaninline{Restrict}, \pecaninline{Structure}, and \pecaninline{Theorem}.
+
+\begin{pecan}
+Restrict VARIABLES are TYPE_PREDICATE.
+\end{pecan}
+
+In all following code in the file in which the \pecaninline{Restrict} appears, the variables specified are now consider to be of the specified type.
+
+\vspace{-0.5em}
+\begin{pecan}
+Structure TYPE_PREDICATE defining { FUNCTION_PREDICATES }
+\end{pecan}
+\vspace{-0.5em}
+
+Defines a new structure.
+The \pecaninline{TYPE_PREDICATE} is essentially the part written after the \pecaninline{is} in a restriction. 
+For example, in \pecaninline{Restrict x is nat.}, the type predicate is \pecaninline{nat}; in \pecaninline{Restrict i is ostrowski(a).}, the type predicate is \pecaninline{ostrowski(a)}.
+The function predicates become available to be called using the names in quotes---this feature allows for ad-hoc polymorphism, as described in Section~\ref{sec:implementation}.
+It is also used to resolve arithmetic operators, such as \pecaninline{+} (which calls the relevant \pecaninline{adder}) and \pecaninline{<} (which calls the relevant \pecaninline{less}).
+
+\vspace{-0.5em}
+\begin{pecan}
+Theorem ("THEOREM NAME", { PREDICATE }).
+\end{pecan}
+\vspace{-0.5em}
+\pecaninline{Theorem} is the interface to the theorem proving capabilities of Pecan, stating that Pecan show attempt to prove the specified \pecaninline{PREDICATE} is true.
+
+Below is an example of using all three features from above: specifying a structure called \pecaninline{nat}, restricting variables, and then proving a theorem, which is true because of the dynamic call resolution.
+\vspace{-0.5em}
+\begin{pecan}
+Structure nat defining {
+    "adder": bin_add(any, any, any),
+    "less": bin_less(any, any)
+}
+Restrict a, b are nat.
+Theorem ("", { forall a,b. a < b <=> bin_less(a,b)}).
+\end{pecan}
+\vspace{-0.5em}
+
+\paragraph{Automatic Words}
+Any predicate $P$ can be interpreted as a word by writing $P[i]$, which is treated as $1$ if $P(i)$ is true, and $0$ if $P(i)$ is false.
+Currently only binary automatic words are supported.
+We use the following translations into the IR:
+
+\begin{itemize}
+    \item $P[i] = 0 \leadsto \lnot P(i)$
+    \item $P[i] = 1 \leadsto P(i)$
+    \item $P[i] = Q[j] \leadsto P(i) \iff P(j)$
+    \item $P[i] \neq Q[j] \leadsto \lnot (P(i) \iff P(j))$
+    \item $P[i..j] = P[k..\ell] \leadsto j + k = i + \ell \land \forall n \in \typ{i}. i + n < j \Rightarrow P[i + n] = P[k + n]$
+\end{itemize}
+
+% \paragraph{Praline} is a functional language for metaprogramming that is a part of the Pecan system.
+% We omit a full description due to space reasons, as it plays only a supporting role to the main system. 
+% Some examples of its uses are:
+% \begin{itemize}
+%     \item Building automata that cannot be specified by a first-order formula involving other automata.
+%     \item Defining useful helpers, such as \pecaninline{Theorem}, which generates certain Pecan definitions and statements.
+% \begin{pecan}
+% Define theoremCheck $\$$ID $\$$BODY := do
+%   emit {$\$$ID() := $\$$BODY}; emit {#assert_prop(true,$\$$ID)}.
+% Alias "Theorem" ==> Execute uncurry theoremCheck.
+% Theorem ("Addition is commutative", 
+% { forallx,y are nat. x + y = y + x }).
+% \end{pecan}
+%     \item Formatting the raw output of Pecan into human readable output.
+%         For example, the real number encoding in Pecan represents $17/5$ as $00111(10000010)^\omega$.
+%         Using Pecan, we can format this as $11.01(1001)^\omega$ in binary.
+% \end{itemize}
+
+% \begin{pecan}
+% #save_aut(FILENAME, PREDICATE)
+% #save_aut("bin_even.aut", bin_even)
+% \end{pecan}
+
+% Saves the predicate as an automaton in the modified HOA~\cite{hoa-format} format to the location specified.
+
+% \begin{pecan}
+% #load(FILENAME, FORMAT, PREDICATE)
+% #load("bin_add.aut", "hoa", bin_add(a,b,c))
+% #load("real/real_equal.txt", "pecan", real_equal(a, b))
+% \end{pecan}
+
+% Loads an automaton from a file with the specified name and arguments.
+% Note that the number of arguments is \emph{NOT} checked for you.
+% In general, you should be careful when loading automata from files because there are not many safeguards (it is assumed you know what you are doing).
+% There are three currently supported formats: ``hoa''~\cite{hoa-format}, as described earlier; ``walnut'', the format that the automated theorem prover Walnut~\cite{walnut} uses; and ``pecan'', a custom format that Pecan uses, described below in the manual~\cite{pecan-repo}.
+
+% \begin{pecan}
+% #import(FILENAME)
+% #import("integers.pn")
+% \end{pecan}
+
+% Loads all definitions from the specified file into the current scope.
+% Does \emph{NOT} load restrictions into the current scope, but they function normally while evaluating the imported file.
+% To control the search path, you can set the \lstinline{PECAN_PATH} environment variable.
+% By default, the current working directory (at the time of loading the program), the directory the current source file is in, and the \lstinline{library/} directory of the Pecan directory.

@@ -1,0 +1,56 @@
+\documentclass[11pt]{article}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{bbm}
+\usepackage{amsrefs}
+\usepackage{tikz}
+\usepackage{setspace,kantlipsum}
+\usepackage[toc,page]{appendix}
+
+
+\theoremstyle{definition}
+\newtheorem{thm}{Theorem}
+\newtheorem{prop}{Proposition}
+\newtheorem*{defn}{Definition}
+\newtheorem*{note}{Note}
+\newtheorem{claim}{Claim}
+\newtheorem{lemma}{Lemma}
+\newtheorem{step}{Step}
+
+\usepackage[margin=2cm]{geometry}
+
+\title{Pecan: An Automated Theorem Prover}
+
+\author{
+IGL Scholars: Zhengyao Lin, Eric Ma, Reed Oei, Yikai Teng, Pavle Vuksanovic \\
+Graduate Mentor: Christian Schulz, Mary-Angelica Tursi \\
+Faculty Advisor: Philipp Hieronymi%
+}
+
+
+\begin{document}
+% \begin{spacing}{1.5}
+
+\maketitle
+
+\begin{abstract}
+
+Pecan is an automated theorem prover for reasoning about \emph{automatic sequences}, which are sequences that can be recognized by some (typically finite) automaton.
+Automated theorem provers and automatic sequences have diverse applications: in computer science, they are commonly used for program verification; in mathematics, they have found uses in logic, number theory, and combinatorics. Pecan is capable of proving any statement expressed in terms of B\"uchi automata and first-order logic connectives.
+
+We have used Pecan to prove many theorems about a special class of automatic sequences called \emph{Sturmian words}, and we are currently exploring extensions including deciding sentences
+involving linear inequalities with integer and quadratic irrational coefficients, and
+visualization of fractals defined by B\"uchi automata.
+
+This work is done in the research project ``Pecan: An Automated Theorem Prover'' at the Illinois Geometry Lab in 2019-2020.
+
+% We discuss Pecan, some of the theorems we've proven, as well as our approaches and results in constraint solving and fractal visualization.
+% An \emph{automated theorem prover} is a program capable of proving or disproving mathematical statements with no human guidance.
+% We can work with constraint problems involving not only rational numbers, but also \emph{quadratic irrationals}, We can also use Pecan to visualize fractals defined by B\"uchi automata.
+\end{abstract}
+
+% \end{spacing}
+\end{document}
